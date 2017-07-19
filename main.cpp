@@ -485,8 +485,9 @@ std::vector<int> gen_case(int m, int mu) {
 
 int main(int argc, char* argv[]) {
 
-    auto cases = read_case_base("test_cb.txt");
-    auto outcomes = read_mapping("test_res.txt");
+    auto cases = read_case_base("casebase_full.txt");
+    auto cases_guess = read_case_base("casebase_guess.txt");
+    auto outcomes = read_mapping("casebase_outcomes.txt");
 
     constexpr auto seed = int{0};
     constexpr auto m = int{4};
@@ -505,7 +506,8 @@ int main(int argc, char* argv[]) {
     for(auto i = 0; i < k; ++i) {
         //std::cout << "Generating case " << i << std::endl;
         auto o = outcomes[i];
-        auto nc = cases[i];//gen_case(m, mu);
+        auto nc = cases_guess[i];//gen_case(m, mu);
+        auto full_case = cases[i];
         //std::cout << nc << " " << o << std::endl;
         auto proj = cb.projection(nc);
 
@@ -554,7 +556,7 @@ int main(int argc, char* argv[]) {
 
         std::cout << outcomes[i] << " " << prediction << " " << pred_test << " " << avr_good << " " << avr_good_test << " " << avr_good / (i+1) << " " << avr_good_test / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << std::endl;
         //std::cout << "Case " << i << ": " << nc << std::endl;
-        cb.add_case(nc, o);
+        cb.add_case(full_case, o);
         //cb.display();
         //std::cout << "#########################################################" << std::endl;
     }
