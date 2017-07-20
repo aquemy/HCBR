@@ -473,7 +473,7 @@ int main(int argc, char* argv[]) {
         std::cout << i << " " << outcomes[i] << " " << prediction << " " << pred_test << " " << avr_good << " " << avr_good_test << " " << avr_good / (i+1) << " " << avr_good_test / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << std::endl;
         //std::cout << "Case " << i << ": " << nc << std::endl;
         cb.add_case(nc, o);
-        cb.display();
+        //cb.display();
         //std::cout << "#########################################################" << std::endl;
     }
     //cb.display();
