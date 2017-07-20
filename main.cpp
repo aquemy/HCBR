@@ -9,14 +9,6 @@
 #include <set>
 #include <random>
 
-namespace std {
-    template <class C>
-    constexpr auto size(const C& c) -> decltype(c.size())
-    {
-        return c.size();
-    }
-}
-
 template <typename T>
 std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
   if ( !v.empty() ) {
@@ -27,13 +19,10 @@ std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
   return out;
 }
 
-
-
 template <typename T>
 std::vector<T> line_to_vect(std::string& line) {
     std::vector<T> v;
     std::istringstream iss(line);
-
     return std::vector<T>(std::istream_iterator<T>(iss), std::istream_iterator<T>());
 }
 
@@ -65,8 +54,9 @@ std::vector<bool> read_mapping(std::string path) {
 
 
 double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
-    std::vector<int> i;
-    std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::back_inserter(i));
+    std::vector<int> i(std::max(std::size(ref), std::size(n)));
+    std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
+    i.resize(it-std::begin(i));
     return std::size(i) / double(std::size(ref));
 }
 
@@ -128,12 +118,8 @@ public:
                 }
                 intersection_family.push_back(e.second);
                 auto index_ei = std::size(e_to_c);
-                //e_to_outcome[index_ei].push_back(outcome);
-                //e_to_c[index_ei] = std::vector<int>{int(case_index)};
-                //e_to_c[index_ei].push_back(case_index);
                 auto index_last_ei = std::size(intersection_family) - 1;
                 for(auto f: e.second) {
-                    //f_to_e[f].push_back(index_last_ei);
                     f_to_e[f] = index_last_ei;
                 }
                 e_to_outcome_count[index_ei] = std::vector<int>{0, 0};
@@ -167,7 +153,6 @@ public:
             c_to_e[case_index].push_back(index_ei);
             auto index_last_ei = std::size(intersection_family) - 1;
             for(auto f: discretionary_features) {
-                //f_to_e[f].push_back(index_last_ei);
                 f_to_e[f] = index_last_ei;
             }
             calculate_intrinsic_strength(0, index_last_ei);
@@ -214,18 +199,12 @@ public:
         double top = e_to_outcome_count[ei][o] * case_overlap(cases[c], ei_details);
 
         for(auto e: c_to_e[c]) {
-            //std::cout << "ADD " << e << " " << e_to_outcome_count[e][o] << " " << case_overlap(cases[c], intersection_family[e]) << std::endl;
             total += e_to_outcome_count[e][o] * case_overlap(cases[c], intersection_family[e]);
         }
 
         if(total == 0) {
-            //std::cout << "MU("<< o << ", " << ei << ", " << c << ")=" << 0 << std::endl;
-            //std::cout << "Top: " << top << " | Case overlap" << case_overlap(cases[c], ei_details) << std::endl;
             return 0.;
         } else {
-            //std::cout << "MU("<< o << ", " << ei << ", " << c << ")=" << top / double(total) << std::endl;
-            //std::cout << "Top: " << top << " | Case overlap: " << case_overlap(cases[c], ei_details) << " | Total: " << total << std::endl;
-            //std::cout << "ETO len: " << e_to_outcome_count[ei][o] << std::endl;
             return top / double(total);
         }
     }
@@ -243,26 +222,8 @@ public:
         for(auto c: ca) {
             top += mu(o, ei, c);
         }
-        //std::cout << "_non_normalized_intrinsic_strength("<< o << ", " << ei << ")=" << top * res << " | top: " << top << " | res: " << res << std::endl;
         return top * res;
     }
-
-    /*
-    def _non_normalized_intrinsic_strength(self, o, ei):
-        # Find the cases in which ei belongs and have o for outcome
-        index_ei = self.intersection_familly.index(ei)
-        cases = self.ei_case_mapping[index_ei]
-        cases = [c for c in cases if self.outcomes[c] == o]
-        #print("ei {} (index {}) - cases: {}".format(ei, index_ei, cases))
-        features_in_cb = len([f for f in self.features_case_mapping if len(f) > 0])
-
-        res = float(len(ei)) / features_in_cb
-        top = 0.
-        for c in cases:
-            top += self.mu(o, index_ei, c)
-
-        return top * res
-    */
 
     void calculate_intrinsic_strength(int o, int ei) {
         auto all_strength = double{0.};
@@ -274,32 +235,7 @@ public:
             all_strength = ei_strength / all_strength;
         }
         e_intrinsic_strength[o][ei] = all_strength;
-        //std::cout << "calculate_intrinsic_strength("<< o << ", " << ei << ")=" << all_strength << std::endl;
     }
-
-    /*
-    def calculate_intrinsic_strength(self, o, ei):
-        all_strength = 0.
-        ei_strength = self._non_normalized_intrinsic_strength(o, self.intersection_familly[ei])
-        for e in self.intersection_familly:
-            #print(e, self.intersection_familly[ei])
-            s = self._non_normalized_intrinsic_strength(o, e)
-            all_strength += s
-        #print(e, o, all_strength, ei_strength)
-        if all_strength == 0:
-            ei_strength = 0.
-        else:
-            ei_strength = ei_strength / all_strength
-        self.ei_intrinsic_strength[o][ei] = ei_strength
-    */
-
-    /*
-    def intrinsic_strength(self, o, ei):
-        #print('IF', self.intersection_familly)
-        i = self.intersection_familly.index(ei)
-        #print(ei, i)
-        return 0#self.ei_intrinsic_strength[o][i]
-    */
 
     void display() {
         std::cout << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
@@ -368,7 +304,6 @@ public:
             std::cout << std::endl;
         }
 
-        ///*
         std::cout << "# Ei to Outcome count" << std::endl;
         for(auto e: e_to_outcome_count) {
             std::cout << "e" << e.first << " -> ";
@@ -377,7 +312,7 @@ public:
             }
             std::cout << std::endl;
         }
-        //*/
+
         std::cout << "# Overlap Matrix" << std::endl;
         for(int i=0; i < std::size(cases); ++i) {
             std::cout << "# C" << i << " ";
@@ -412,44 +347,6 @@ public:
 
     }
 
-    /*
-
-        cb_str += "# Intersection familly:\n"
-        for i, e in enumerate(self.intersection_familly):
-            e_str = ''
-            for f in e:
-                e_str += 'f{}, '.format(f)
-            cb_str += "# e{} -> {}\n".format(i, e_str)
-
-        cb_str += "# Feature to Ei mapping:\n"
-        for i, f in enumerate(self.features_ei_mapping):
-            f_str = ''
-            for e in f:
-                f_str += 'e{}, '.format(e)
-            cb_str += "# f{} -> {}\n".format(i, f_str)
-
-        cb_str += "# Ei to Case mapping:\n"
-        for i, e in enumerate(self.ei_case_mapping):
-            c_str = ''
-            for c in e:
-                c_str += 'c{}, '.format(c)
-            cb_str += "# e{} -> {}\n".format(i, c_str)
-
-        cb_str += "# Overlap Matrix:\n"
-        for i, c in enumerate(self.cases):
-            line_str = ''
-            for d in self.cases:
-                line_str += '{:.3f} '.format(case_overlap(c, d))
-            cb_str += '# C{}: {}\n'.format(i, line_str)
-
-        cb_str += '# Case to Ei mapping:\n'
-        cb_str += '# {}\n'.format(self.case_ei_mapping())
-
-        cb_str += '# Ei to Outcomes:\n'
-        cb_str += '# {}\n'.format(self.ei_outcome_mapping())
-
-        return cb_str
-    */
     std::vector<std::vector<int>> intersection_family;
     std::map<int, std::map<int, double>> e_intrinsic_strength;
 private:
@@ -485,9 +382,8 @@ std::vector<int> gen_case(int m, int mu) {
 
 int main(int argc, char* argv[]) {
 
-    auto cases = read_case_base("casebase_full.txt");
-    auto cases_guess = read_case_base("casebase_guess.txt");
-    auto outcomes = read_mapping("casebase_outcomes.txt");
+    auto cases = read_case_base("casebase_guess.txt");
+    auto outcomes = read_mapping("test_res.txt");
 
     constexpr auto seed = int{0};
     constexpr auto m = int{4};
@@ -554,9 +450,9 @@ int main(int argc, char* argv[]) {
         avr_good += 1 - abs(outcomes[i] - prediction);
         avr_good_test += 1 - abs(outcomes[i] - pred_test);
 
-        std::cout << outcomes[i] << " " << prediction << " " << pred_test << " " << avr_good << " " << avr_good_test << " " << avr_good / (i+1) << " " << avr_good_test / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << std::endl;
+        std::cout << i << " " << outcomes[i] << " " << prediction << " " << pred_test << " " << avr_good << " " << avr_good_test << " " << avr_good / (i+1) << " " << avr_good_test / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << std::endl;
         //std::cout << "Case " << i << ": " << nc << std::endl;
-        cb.add_case(full_case, o);
+        cb.add_case(nc, o);
         //cb.display();
         //std::cout << "#########################################################" << std::endl;
     }
