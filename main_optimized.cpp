@@ -52,11 +52,10 @@ std::vector<bool> read_mapping(std::string path) {
     return v;
 }
 
-double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
+inline double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
     static std::vector<int> i(100); // TODO: Should be the maxium number of feature per case or the feature size space is unknown
     auto it = std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
-    i.resize(it-std::begin(i));
-    return std::size(i) / double(std::size(ref));
+    return double(it-std::begin(i)) / double(std::size(ref));
 }
 
 
@@ -164,8 +163,6 @@ public:
         {
             c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
             c_to_e_overlap[1][case_index][e] = mu(1, e, case_index);
-            calculate_intrinsic_strength(0, e);
-            calculate_intrinsic_strength(1, e);
         }
         for (auto e: intersection_map) {
             for(auto c: e_to_c[e.first]) {
@@ -174,6 +171,11 @@ public:
                     c_to_e_overlap[1][c][e2] = mu(1, e2, c);
                 }
             }
+        }
+        for (auto e: c_to_e[case_index])
+        {
+            calculate_intrinsic_strength(0, e);
+            calculate_intrinsic_strength(1, e);
         }
 
     }
@@ -239,6 +241,7 @@ public:
         for(auto c: ca) {
             top += c_to_e_overlap[o][c][ei];
         }
+        //std::cout << "   -> _non_normalized_intrinsic_strength: " << o << " " << ei << " : " << top << " " << res << std::endl;
         return top * res;
     }
 
@@ -248,6 +251,7 @@ public:
         for(int i=0; i < std::size(intersection_family); ++i) {
             all_strength += _non_normalized_intrinsic_strength(o, i);
         }
+        //std::cout << "calculate_intrinsic_strength: " << o << " " << ei << " : " << ei_strength << " " << all_strength << std::endl;
         if(all_strength > 0) {
             all_strength = ei_strength / all_strength;
         }
@@ -345,6 +349,7 @@ public:
         for(int i=0; i < std::size(intersection_family); ++i) {
             std::cout << "e" << i << "-> (" << e_intrinsic_strength[0][i] << ", " << e_intrinsic_strength[1][i] <<  ")" << std::endl;
         }
+        /*
         std::cout << "# Mu(0)" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
             std::cout << "e" << i << ": ";
@@ -362,7 +367,7 @@ public:
             }
             std::cout << std::endl;
         }
-
+        */
 
     }
 
@@ -409,8 +414,8 @@ int main(int argc, char* argv[]) {
     constexpr auto seed = int{0};
     constexpr auto m = int{4};
     constexpr auto mu = int{10};
-    //auto k = int(std::size(cases));
-    auto k = int{500};
+    auto k = int(std::size(cases));
+    //auto k = int{500};
     constexpr auto eta = double{0.};
     constexpr auto delta = double{1.};
 
