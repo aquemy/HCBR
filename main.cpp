@@ -53,9 +53,10 @@ std::vector<bool> read_mapping(std::string path) {
 }
 
 
+
 double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
-    std::vector<int> i(std::max(std::size(ref), std::size(n)));
-    std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
+    static std::vector<int> i(100); // TODO: Should be the maxium number of feature per case or the feature size space is unknown
+    auto it = std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
     i.resize(it-std::begin(i));
     return std::size(i) / double(std::size(ref));
 }
@@ -388,8 +389,8 @@ int main(int argc, char* argv[]) {
     constexpr auto seed = int{0};
     constexpr auto m = int{4};
     constexpr auto mu = int{10};
-    auto k = int(std::size(cases));
-    //auto k = int{10};
+    //auto k = int(std::size(cases));
+    auto k = int{500};
     constexpr auto eta = double{0.};
     constexpr auto delta = double{1.};
 
