@@ -107,6 +107,7 @@ public:
         for(auto e: intersection_map) {
             if(std::size(intersection_family[e.first]) == std::size(e.second)) {
                 e_to_c[e.first].push_back(case_index);
+                e_to_c_by_o[e.first][outcome].push_back(case_index);
                 c_to_e[case_index].push_back(e.first);
 
                 e_to_outcome[e.first].push_back(outcome);
@@ -127,9 +128,11 @@ public:
                 e_to_outcome[index_last_ei].push_back(outcome);
                 e_to_outcome_count[index_last_ei][outcome]++;
                 e_to_c[index_last_ei].push_back(case_index);
+                e_to_c_by_o[index_last_ei][outcome].push_back(case_index);
                 c_to_e[case_index].push_back(index_last_ei);
                 for(auto c: e_to_c[e.first]) {
                     e_to_c[index_ei].push_back(c);
+                    e_to_c_by_o[index_ei][outcomes[c]].push_back(c);
                     c_to_e[c].push_back(index_ei);
                     e_to_outcome[index_ei].push_back(outcomes[c]);
                     e_to_outcome_count[index_ei][outcomes[c]]++;
@@ -146,6 +149,7 @@ public:
             intersection_family.push_back(discretionary_features);
             auto index_ei = std::size(intersection_family) - 1;
             e_to_c[index_ei].push_back(case_index);
+            e_to_c_by_o[index_ei][outcome].push_back(case_index);
             e_to_outcome[index_ei] = std::vector<int>{outcome};
             e_to_outcome_count[index_ei] = std::vector<int>{0, 0};
             e_to_outcome_count[index_ei][outcome]++;
@@ -222,13 +226,14 @@ public:
     }
 
     double _non_normalized_intrinsic_strength(int o, int ei) {
-        auto cases = e_to_c[ei];
+        //auto cases = e_to_c[ei];
         // TODO: Optimized by keeping the index in memory updated during add_case
-        auto ca = std::vector<int>{};
-        for(int i=0; i < std::size(cases); ++i) {
-            if(outcomes[cases[i]] == o)
-                ca.push_back(cases[i]);
-        }
+        //auto ca = std::vector<int>{};
+        auto ca = e_to_c_by_o[ei][o];
+        //for(int i=0; i < std::size(cases); ++i) {
+        //    if(outcomes[cases[i]] == o)
+        //        ca.push_back(cases[i]);
+        //}
         auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
         auto top = double{0.};
         for(auto c: ca) {
@@ -372,6 +377,7 @@ private:
     std::map<int, int> f_to_e;
 
     std::map<int, std::vector<int>> e_to_c;
+    std::map<int, std::map<int, std::vector<int>>> e_to_c_by_o;
     std::map<int, std::vector<int>> c_to_e;
     std::map<int, std::vector<int>> e_to_outcome;
     std::map<int, std::vector<int>> e_to_outcome_count;
