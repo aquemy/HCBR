@@ -52,8 +52,6 @@ std::vector<bool> read_mapping(std::string path) {
     return v;
 }
 
-
-
 double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
     static std::vector<int> i(100); // TODO: Should be the maxium number of feature per case or the feature size space is unknown
     auto it = std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
@@ -74,6 +72,9 @@ public:
 
         e_intrinsic_strength[0] = std::map<int,double>{};
         e_intrinsic_strength[1] = std::map<int,double>{};
+
+        c_to_e_overlap[0] = std::map<int, std::map<int, double>>();
+        c_to_e_overlap[1] = std::map<int, std::map<int, double>>();
     }
 
 
@@ -102,6 +103,9 @@ public:
                 }
             }
             intersection_map[ei] = inter;
+            //std::cout << "Calculate0 mu(" << ei << " ," << case_index << ")" << std::endl;
+            //c_to_e_overlap_0[case_index][ei] = mu(0, ei, case_index);
+            //c_to_e_overlap_1[case_index][ei] = mu(1, ei, case_index);
         }
         for(auto e: intersection_map) {
             if(std::size(intersection_family[e.first]) == std::size(e.second)) {
@@ -110,13 +114,14 @@ public:
 
                 e_to_outcome[e.first].push_back(outcome);
                 e_to_outcome_count[e.first][outcome]++;
-                calculate_intrinsic_strength(0, e.first);
-                calculate_intrinsic_strength(1, e.first);
+                //calculate_intrinsic_strength(0, e.first);
+                //calculate_intrinsic_strength(1, e.first);
             }
             else if(std::size(e.second) > 0) {
                 for(auto f: e.second) {
                     intersection_family[e.first].erase(std::remove(std::begin(intersection_family[e.first]), std::end(intersection_family[e.first]), f), std::end(intersection_family[e.first]));
                 }
+            
                 intersection_family.push_back(e.second);
                 auto index_ei = std::size(e_to_c);
                 auto index_last_ei = std::size(intersection_family) - 1;
@@ -134,8 +139,18 @@ public:
                     e_to_outcome[index_ei].push_back(outcomes[c]);
                     e_to_outcome_count[index_ei][outcomes[c]]++;
                 }
-                calculate_intrinsic_strength(0, index_last_ei);
-                calculate_intrinsic_strength(1, index_last_ei);
+                // Update mu for each case in e_to_c as we modified e
+                //for (auto c: e_to_c[e.first])
+                //{
+                //    std::cout << "Calculate1 mu(" << e.first << " ," << c << ")" << std::endl;
+                //    c_to_e_overlap_0[c][e.first] = mu(0, e.first, c);
+                //    c_to_e_overlap_1[c][e.first] = mu(1, e.first, c);
+                //}
+                //std::cout << "Calculate2 mu(" << index_last_ei << " ," << case_index << ")" << std::endl;
+                //c_to_e_overlap_0[case_index][index_last_ei] = mu(0, index_last_ei, case_index);
+                //c_to_e_overlap_1[case_index][index_last_ei] = mu(1, index_last_ei, case_index);
+                //calculate_intrinsic_strength(0, index_last_ei);
+                //calculate_intrinsic_strength(1, index_last_ei);
             }
         }
 
@@ -156,9 +171,29 @@ public:
             for(auto f: discretionary_features) {
                 f_to_e[f] = index_last_ei;
             }
-            calculate_intrinsic_strength(0, index_last_ei);
-            calculate_intrinsic_strength(1, index_last_ei);
+            //std::cout << "Calculate3 mu(" << index_ei << " ," << case_index << ")" << std::endl;
+            //c_to_e_overlap_0[case_index][index_last_ei] = mu(0, index_last_ei, case_index);
+            //c_to_e_overlap_1[case_index][index_last_ei] = mu(1, index_last_ei, case_index);
+            //calculate_intrinsic_strength(0, index_last_ei);
+            //calculate_intrinsic_strength(1, index_last_ei);
 
+        }
+
+        for (auto e: c_to_e[case_index])
+        {
+            //std::cout << "Calculate4 mu(" << e << " ," << case_index << ")" << std::endl;
+            c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
+            c_to_e_overlap[1][case_index][e] = mu(1, e, case_index);
+            calculate_intrinsic_strength(0, e);
+            calculate_intrinsic_strength(1, e);
+        }
+        for (auto e: intersection_map) {
+            for(auto c: e_to_c[e.first]) {
+                for(auto e2: c_to_e[c]) {
+                    c_to_e_overlap[0][c][e2] = mu(0, e2, c);
+                    c_to_e_overlap[1][c][e2] = mu(1, e2, c);
+                }
+            }
         }
 
     }
@@ -195,6 +230,20 @@ public:
     }
 
     double mu(int o, int ei, int c) {
+        // TEST PERF
+        /*
+        if(c_to_e_overlap_matrix.count(c) == 1) {
+            if(c_to_e_overlap_matrix[c].count(ei) == 1) {
+                c_to_e_overlap_matrix[c][ei]++;
+            } else {
+                c_to_e_overlap_matrix[c][ei] = 1;
+            }
+        } else {
+            c_to_e_overlap_matrix[c] = std::map<int, int>();
+            c_to_e_overlap_matrix[c][ei] = 1;
+        }
+        */
+        // END TEST PERF
         auto ei_details = intersection_family[ei];
         auto total = double{0};
         double top = e_to_outcome_count[ei][o] * case_overlap(cases[c], ei_details);
@@ -221,7 +270,7 @@ public:
         auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
         auto top = double{0.};
         for(auto c: ca) {
-            top += mu(o, ei, c);
+            top += c_to_e_overlap[o][c][ei];
         }
         return top * res;
     }
@@ -239,6 +288,7 @@ public:
     }
 
     void display() {
+        
         std::cout << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
         std::cout << "# Case composition" << std::endl;
         auto i = 0;
@@ -350,6 +400,8 @@ public:
 
     std::vector<std::vector<int>> intersection_family;
     std::map<int, std::map<int, double>> e_intrinsic_strength;
+    std::map<int, std::map<int, int>> c_to_e_overlap_matrix; // TEST
+    std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap;
 private:
     int m;
     int max_k;
@@ -457,10 +509,7 @@ int main(int argc, char* argv[]) {
         //cb.display();
         //std::cout << "#########################################################" << std::endl;
     }
-    cb.display();
-
-
-
+    //cb.display();
 
     return 0;
 }
