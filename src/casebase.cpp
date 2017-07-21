@@ -1,59 +1,37 @@
 #include <algorithm>
-#include <chrono>
-#include <functional>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <map>
 #include <vector>
+#include <map>
 #include <set>
-#include <random>
 
-template <typename T>
-std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
-  if ( !v.empty() ) {
-    out << '[';
-    std::copy (std::begin(v), std::end(v), std::ostream_iterator<T>(out, ", "));
-    out << "\b\b]";
-  }
-  return out;
-}
-
-template <typename T>
-std::vector<T> line_to_vect(std::string& line) {
-    std::vector<T> v;
-    std::istringstream iss(line);
-    return std::vector<T>(std::istream_iterator<T>(iss), std::istream_iterator<T>());
-}
-
-
-std::vector<std::vector<int>> read_case_base(std::string path) {
-    std::ifstream file(path);
-    std::vector<std::vector<int>> cb;
-    std::string line;
-
-    if (file) {
-        while (std::getline(file, line)) {
-            cb.push_back(line_to_vect<int>(line));
+std::map<int, int> features_count(const std::vector<std::vector<int>>& cases) {
+    auto feature_map = std::map<int, int>();
+    for(auto c: cases) {
+        for(const auto& f: c) {
+            if(feature_map.count(f) == 1) {
+                feature_map[f]++;
+            } else {
+                feature_map[f] = 0;
+            }
         }
     }
-    return cb;
+    return feature_map;
 }
 
-std::vector<bool> read_mapping(std::string path) {
-    std::ifstream file(path);
-    std::vector<bool> v;
-    std::string line;
-    if (file) {
-        while (std::getline(file, line)) {
-            v.push_back(bool(std::stoi(line)));
-        }
+int total_features_count(const std::map<int, int>& feature_map) {
+    auto total = 0;
+    for(auto e: feature_map) {
+        total += e.second;
     }
-    return v;
+    return total;
 }
 
-inline double case_overlap_(const std::vector<int>& ref, const std::vector<int>& n) {
+auto random_prediction(auto gen) {
+    std::bernoulli_distribution bernouilli(0.5);
+    return bernouilli(gen);
+}
+
+
+inline double case_overlap_stl(const std::vector<int>& ref, const std::vector<int>& n) {
     static std::vector<int> i(100); // TODO: Should be the maxium number of feature per case or the feature size space is unknown
     auto it = std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
     return double(it-std::begin(i)) / double(std::size(ref));
@@ -67,7 +45,6 @@ inline double case_overlap(const std::vector<int>& ref, const std::vector<int>& 
     auto count = int{0};
     auto max_val = std::min(ref.back(), n.back()); // Min-max value
     while(i < size_iterate && j < size_compare && ref[i] <= max_val && n[j] <= max_val) {
-        //std::cout << "i: " << i << " j: " << j << " ref[i]: " << ref[i] << " n[j]: " << n[j] << " max_val: " << max_val << std::endl;
         if(ref[i] == n[j]) {
             count++;
             j++;
@@ -252,31 +229,12 @@ public:
         }
     }
 
-    double _non_normalized_intrinsic_strength(int o, int ei) {
-        //auto cases = e_to_c[ei];
-        // TODO: Optimized by keeping the index in memory updated during add_case
-        //auto ca = std::vector<int>{};
-        auto ca = e_to_c_by_o[ei][o];
-        //for(int i=0; i < std::size(cases); ++i) {
-        //    if(outcomes[cases[i]] == o)
-        //        ca.push_back(cases[i]);
-        //}
-        auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
-        auto top = double{0.};
-        for(auto c: ca) {
-            top += c_to_e_overlap[o][c][ei];
-        }
-        //std::cout << "   -> _non_normalized_intrinsic_strength: " << o << " " << ei << " : " << top << " " << res << std::endl;
-        return top * res;
-    }
-
     void calculate_intrinsic_strength(int o, int ei) {
         auto all_strength = double{0.};
         auto ei_strength = _non_normalized_intrinsic_strength(o, ei);
         for(int i=0; i < std::size(intersection_family); ++i) {
             all_strength += _non_normalized_intrinsic_strength(o, i);
         }
-        //std::cout << "calculate_intrinsic_strength: " << o << " " << ei << " : " << ei_strength << " " << all_strength << std::endl;
         if(all_strength > 0) {
             all_strength = ei_strength / all_strength;
         }
@@ -286,7 +244,6 @@ public:
     void display() {
         
         std::cout << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
-        /*
         std::cout << "# Case composition" << std::endl;
         auto i = 0;
         for(auto c: cases) {
@@ -368,13 +325,13 @@ public:
                 std::cout << std::fixed << std::setprecision(3) << case_overlap(cases[i], cases[j]) << " ";
             }
             std::cout << std::endl;
-        }*/
+        }
 
         std::cout << "# Intrinsic Strength" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
             std::cout << "e" << i << "-> (" << e_intrinsic_strength[0][i] << ", " << e_intrinsic_strength[1][i] <<  ")" << std::endl;
         }
-        /*
+
         std::cout << "# Mu(0)" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
             std::cout << "e" << i << ": ";
@@ -392,14 +349,25 @@ public:
             }
             std::cout << std::endl;
         }
-        */
 
     }
 
     std::vector<std::vector<int>> intersection_family;
     std::map<int, std::map<int, double>> e_intrinsic_strength;
     std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap;
+
 private:
+
+    double _non_normalized_intrinsic_strength(int o, int ei) {
+        auto ca = e_to_c_by_o[ei][o];
+        auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
+        auto top = double{0.};
+        for(auto c: ca) {
+            top += c_to_e_overlap[o][c][ei];
+        }
+        return top * res;
+    }
+
     int m;
     int max_k;
     std::vector<std::vector<int>> cases;
@@ -413,110 +381,3 @@ private:
     std::map<int, std::vector<int>> e_to_outcome;
     std::map<int, std::vector<int>> e_to_outcome_count;
 };
-
-
-std::random_device rnd_device;
-std::mt19937 mersenne_engine(rnd_device());
-std::bernoulli_distribution bernouilli(0.5);
-
-std::vector<int> gen_case(int m, int mu) {
-    std::uniform_int_distribution<int> mu_dist(1, mu);
-    auto c = std::vector<int>(m);
-    std::iota(std::begin(c), std::end(c), 0);
-    std::shuffle(std::begin(c), std::end(c), rnd_device);
-    auto n = mu_dist(mersenne_engine);
-    c.resize(n);
-    std::sort(std::begin(c), std::end(c));
-    return c;
-}
-
-
-int main(int argc, char* argv[]) {
-
-    auto cases = read_case_base("casebase_guess.txt");
-    auto outcomes = read_mapping("test_res.txt");
-
-    constexpr auto seed = int{0};
-    constexpr auto m = int{4};
-    constexpr auto mu = int{10};
-    auto k = int(std::size(cases));
-    //auto k = int{500};
-    constexpr auto eta = double{0.};
-    constexpr auto delta = double{1.};
-
-
-    auto avr_good = double{0.};
-    auto avr_good_test = double{0.};
-
-    auto total_time = double{0.};
-
-    auto cb = CaseBase(m, k);
-    auto nc = std::vector<int>();
-    for(auto i = 0; i < k; ++i) {
-        auto start_iteration = std::chrono::steady_clock::now();
-        //std::cout << "Generating case " << i << std::endl;
-        auto o = outcomes[i];
-        auto nc = cases[i];//gen_case(m, mu);
-        //std::cout << nc << " " << o << std::endl;
-        auto proj = cb.projection(nc);
-
-        auto rdf = std::size(proj.second) / double(std::size(nc));
-        auto pred_0 = double{0.};
-        auto pred_1 = double{0.};
-
-        //std::cout << "# Discretionary features: " << proj.second << std::endl;
-        //std::cout << "# Ratio Discretionary features: " << rdf << std::endl;
-
-        std::vector<int> v(std::size(nc)+std::size(proj.second));
-        std::vector<int>::iterator it;
-        it = std::set_difference (std::begin(nc), std::end(nc), std::begin(proj.second), std::end(proj.second), v.begin());
-        v.resize(it-v.begin());
-
-        auto non_disc_features = int(std::size(v));
-        for(auto k: proj.first) {
-            auto r = std::size(cb.intersection_family[k.first]) / double(non_disc_features);
-            pred_0 += cb.e_intrinsic_strength[0][k.first] * r;
-            pred_1 += cb.e_intrinsic_strength[1][k.first] * r;
-        }
-        //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-        auto a = pred_0;
-        auto b = pred_1;
-
-        if (a + b  + eta > 0) {
-            pred_0 = (a + eta) / (a + b  + eta);
-            pred_1 = b / (a + b + eta);
-        }
-        else {
-            pred_0 = 0;
-            pred_1 = 0;
-        }
-        //std::cout << "# Final Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-        auto prediction = int{0};
-        if(pred_1 > pred_0) {
-            prediction = 1;
-        }
-        //std::cout <<  "Prediction: " << prediction << " - Real value: " << outcomes[i] << std::endl;
-        if(rdf > delta) {
-            prediction = bernouilli(mersenne_engine);
-        }
-        auto pred_test = bernouilli(mersenne_engine);
-        avr_good += 1 - abs(outcomes[i] - prediction);
-        avr_good_test += 1 - abs(outcomes[i] - pred_test);
-
-        
-        //std::cout << "Case " << i << ": " << nc << std::endl;
-        cb.add_case(nc, o);
-        //cb.display();
-        //std::cout << "#########################################################" << std::endl;
-        auto end_iteration = std::chrono::steady_clock::now();
-        auto diff = end_iteration - start_iteration;
-        auto iteration_time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-        //iteration_time /= 1000000.0;
-        total_time += iteration_time;
-
-        std::cout << std::fixed << i << " " << outcomes[i] << " " << prediction << " " << pred_test << " " << avr_good << " " << avr_good_test << " " << avr_good / (i+1) << " " << avr_good_test / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << " " << iteration_time << " " << total_time << std::endl;
-    }
-    //cb.display();
-
-    return 0;
-}
