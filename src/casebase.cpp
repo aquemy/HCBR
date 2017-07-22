@@ -2,7 +2,15 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <tuple>
 
+////////////////////////////////////////////////////////////
+/// \brief Count the unique features in a vector of cases
+///
+/// \param cases Vector of cases
+///
+/// \return std::map (feature, occurrences)
+////////////////////////////////////////////////////////////
 std::map<int, int> features_count(const std::vector<std::vector<int>>& cases) {
     auto feature_map = std::map<int, int>();
     for(auto c: cases) {
@@ -17,6 +25,14 @@ std::map<int, int> features_count(const std::vector<std::vector<int>>& cases) {
     return feature_map;
 }
 
+////////////////////////////////////////////////////////////
+/// \brief Count the total amount of feature from 
+///        a feature map
+///
+/// \param feature_map std::map (feature, occurrences)
+///
+/// \return int total number of features
+////////////////////////////////////////////////////////////
 int total_features_count(const std::map<int, int>& feature_map) {
     auto total = 0;
     for(auto e: feature_map) {
@@ -25,18 +41,86 @@ int total_features_count(const std::map<int, int>& feature_map) {
     return total;
 }
 
+////////////////////////////////////////////////////////////
+/// \brief Generate a random uniform binary prediction
+///
+/// \param gen Random generator
+///
+/// \return int Prediction
+////////////////////////////////////////////////////////////
 auto random_prediction(auto gen) {
     std::bernoulli_distribution bernouilli(0.5);
     return bernouilli(gen);
 }
 
+////////////////////////////////////////////////////////////
+/// \brief Normalize a binary prediction with offset 
+///
+/// \param pred_0 Weight for class 0
+/// \param pred_1 Weight for class 1
+/// \param eta offset for class 0
+///
+/// \return tuple Prediction weigths in a tuple 
+////////////////////////////////////////////////////////////
+std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta) {
+    double a = pred_0;
+    double b = pred_1;
 
+    if (a + b  + eta > 0) {
+        pred_0 = (a + eta) / (a + b  + eta);
+        pred_1 = b / (a + b + eta);
+    }
+    else {
+        pred_0 = 0;
+        pred_1 = 0;
+    }
+    return std::tuple<double, double>(pred_0, pred_1);
+}
+
+////////////////////////////////////////////////////////////
+/// \brief Prediction rule 
+///
+/// \param pred_0 Weight for class 0
+/// \param pred_1 Weight for class 1
+/// \param delta offset for class 0
+/// \param gen Random generator
+///
+/// \return int Final prediction (0 or 1)
+////////////////////////////////////////////////////////////
+auto prediction_rule(auto pred, auto rdf, auto delta, auto gen) {
+    auto prediction = 0;
+    if(std::get<1>(pred) > std::get<0>(pred)) {
+        prediction = 1;
+    }
+    if(rdf > delta) {
+        //prediction = random_prediction(gen);
+    }
+    return prediction;
+}
+
+
+////////////////////////////////////////////////////////////
+/// \brief Case overlap using the STL algorithm
+///
+/// \param ref Reference vector
+/// \param n Vector to compare
+///
+/// \return double Ratio of the intersection on the reference size
+////////////////////////////////////////////////////////////
 inline double case_overlap_stl(const std::vector<int>& ref, const std::vector<int>& n) {
     static std::vector<int> i(100); // TODO: Should be the maxium number of feature per case or the feature size space is unknown
     auto it = std::set_intersection(std::begin(ref), std::end(ref), std::begin(n), std::end(n), std::begin(i));
     return double(it-std::begin(i)) / double(std::size(ref));
 }
 
+////////////////////////////////////////////////////////////
+/// \brief Case overlap using a homemade algorithm
+///
+/// \param ref Reference vector
+/// \param n Vector to compare
+///
+/// \return double Ratio of the intersection on the reference size
+////////////////////////////////////////////////////////////
 inline double case_overlap(const std::vector<int>& ref, const std::vector<int>& n) {
     auto size_iterate = std::size(ref);
     auto size_compare = std::size(n);
@@ -82,7 +166,12 @@ public:
         c_to_e_overlap[1] = std::map<int, std::map<int, double>>();
     }
 
-
+    ////////////////////////////////////////////////////////////
+    /// \brief Add a case to the casebase
+    ///
+    /// \param new_case Case to be added
+    /// \param outcome Case outcome
+    ////////////////////////////////////////////////////////////
     void add_case(std::vector<int> new_case, int outcome) {
         cases.push_back(new_case);
         outcomes.push_back(outcome);
@@ -120,7 +209,13 @@ public:
             }
             else if(std::size(e.second) > 0) {
                 for(auto f: e.second) {
-                    intersection_family[e.first].erase(std::remove(std::begin(intersection_family[e.first]), std::end(intersection_family[e.first]), f), std::end(intersection_family[e.first]));
+                    intersection_family[e.first].erase(
+                        std::remove(
+                            std::begin(intersection_family[e.first]), 
+                            std::end(intersection_family[e.first]), 
+                            f), 
+                        std::end(intersection_family[e.first])
+                    );
                 }
             
                 intersection_family.push_back(e.second);
@@ -147,7 +242,12 @@ public:
 
         auto discretionary_features = new_case;
         for(auto f: intersection) {
-            discretionary_features.erase(std::remove(std::begin(discretionary_features), std::end(discretionary_features), f), std::end(discretionary_features));
+            discretionary_features.erase(
+                std::remove(std::begin(discretionary_features), 
+                            std::end(discretionary_features), 
+                            f), 
+                std::end(discretionary_features)
+            );
         }
 
         if(std::size(discretionary_features)) {
@@ -182,6 +282,13 @@ public:
         }
     }
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Return the projection of a case on the casebase
+    ///
+    /// \param new_case Case to project
+    ///
+    /// \return Projection including an intersection map and discretionary features
+    ////////////////////////////////////////////////////////////
     std::pair<std::map<int, std::vector<int>>, std::vector<int>> projection(std::vector<int> new_case) {
         auto intersecting_ei = std::set<int>();
         for(auto f: new_case) {
@@ -213,6 +320,15 @@ public:
         return {intersection_map , discretionary_features};
     }
 
+    ////////////////////////////////////////////////////////////
+    /// \brief Calculate the measure Mu for a given case and intersecting element 
+    ///
+    /// \param o Case output
+    /// \param ei Intersecting element
+    /// \param c Case
+    ///
+    /// \return Measure mu
+    ////////////////////////////////////////////////////////////
     double mu(int o, int ei, int c) {
         auto ei_details = intersection_family[ei];
         auto total = double{0};
@@ -352,9 +468,9 @@ public:
 
     }
 
-    std::vector<std::vector<int>> intersection_family;
-    std::map<int, std::map<int, double>> e_intrinsic_strength;
-    std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap;
+    std::vector<std::vector<int>> intersection_family;                  ///< Intersecton elements
+    std::map<int, std::map<int, double>> e_intrinsic_strength;          ///< Intrinsic strength of intersecting elements
+    std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap; ///< Overlapping value between cases and intersecting elements
 
 private:
 
@@ -368,16 +484,16 @@ private:
         return top * res;
     }
 
-    int m;
-    int max_k;
-    std::vector<std::vector<int>> cases;
-    std::vector<int> outcomes;
-    std::map<int, std::vector<int>> f_to_c;
-    std::map<int, int> f_to_e;
+    int m;                                                      ///< Number of unique features
+    int max_k;                                                  ///< Maximal number of cases (used for pre-allocation)
+    std::vector<std::vector<int>> cases;                        ///< List of cases
+    std::vector<int> outcomes;                                  ///< List of outcomes
+    std::map<int, std::vector<int>> f_to_c;                     ///< Mapping feature to cases
+    std::map<int, int> f_to_e;                                  ///< Mapping feature to intersecting elements
 
-    std::map<int, std::vector<int>> e_to_c;
-    std::map<int, std::map<int, std::vector<int>>> e_to_c_by_o;
-    std::map<int, std::vector<int>> c_to_e;
-    std::map<int, std::vector<int>> e_to_outcome;
-    std::map<int, std::vector<int>> e_to_outcome_count;
+    std::map<int, std::vector<int>> e_to_c;                     ///< Mapping intersecting elements to cases
+    std::map<int, std::map<int, std::vector<int>>> e_to_c_by_o; ///< Mapping intersecting elements to cases by outcome
+    std::map<int, std::vector<int>> c_to_e;                     ///< Mapping case to intersecting elements
+    std::map<int, std::vector<int>> e_to_outcome;               ///< Mapping intersecting elements to outcomes
+    std::map<int, std::vector<int>> e_to_outcome_count;         ///< Mapping intersecting elements to the number of outcomes type
 };
