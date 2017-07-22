@@ -22,10 +22,13 @@ int main(int argc, char** argv)
     TCLAP::CmdLine cmd("Hypergraph Case-Base Reasoner", ' ', "0.0.1");
 
     TCLAP::ValueArg<double> etaArg("e","eta", "Hyperparameter to add an offset to the default class for prediction", false, 0.,"double", cmd);
-    TCLAP::ValueArg<double> deltaArg("d","delta", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
+    TCLAP::ValueArg<double> deltaArg("d","delta", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 1.,"double", cmd);
 
     TCLAP::ValueArg<string> cbFileArg("c", "casebase","File with the casebase description", true, "", "string", cmd);
     TCLAP::ValueArg<string> oFileArg("o", "outcomes","File with the outomes corresponding to the casebase", true, "", "string", cmd);
+    TCLAP::ValueArg<double> lArg("l","limit", "Limit on the number of cases to add into the casebase", false, -1, "int", cmd);
+    TCLAP::SwitchArg sArg("s","sample-out","Start to calculate the prediction ratio after the training set", cmd, false);
+    TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
 
     cmd.parse(argc, argv);
 
@@ -55,6 +58,20 @@ int main(int argc, char** argv)
     {
         cerr << "Error: " << e.what() << endl;
         return 3;
+    }
+
+    auto sample_out = sArg.getValue();
+    auto keep_offset = kArg.getValue();
+    auto limit_examples = lArg.getValue();
+    if(limit_examples > size(cases)) {
+        cout << "The limit is larger than the cases in the casebase. It will be set to the casebase size." << endl;
+        limit_examples = size(cases);
+    } 
+    else if(limit_examples == -1) {
+        limit_examples = size(cases);
+    }
+    if(sample_out && limit_examples == size(cases)) {
+        cout << "Disable the Sample Out feature due to the limit parameter being as large as the casebase." << endl;
     }
 
     // 1.2 Number of features detection
@@ -87,69 +104,69 @@ int main(int argc, char** argv)
     auto nc = cases[0];
     auto o = outcomes[0];
     decltype(cb.projection(cases[0])) proj;
+    auto prediction = 0;
+    auto pred_0 = 0.;
+    auto pred_1 = 0.;
+    auto r = 0.;
+    auto rdf = 0.;
 
     // 3. Initialize the random generator
     std::random_device rnd_device;
     std::mt19937 gen(rnd_device());
 
+    auto j = 0;
     for(auto i = 0; i < n_cases; ++i) {
         auto start_iteration = std::chrono::steady_clock::now();
         //std::cout << "Generating case " << i << std::endl;
         o = outcomes[i];
-        nc = cases[i];//gen_case(m, mu);
+        nc = cases[i];
         //std::cout << nc << " " << o << std::endl;
-        proj = cb.projection(nc);
+        if(!sample_out || i > limit_examples) 
+        {
+            proj = cb.projection(nc);
+            rdf = std::size(proj.second) / double(std::size(nc));
+            //std::cout << "# Discretionary features: " << proj.second << std::endl;
+            //std::cout << "# Ratio Discretionary features: " << rdf << std::endl;
 
-        auto rdf = std::size(proj.second) / double(std::size(nc));
-        auto pred_0 = double{0.};
-        auto pred_1 = double{0.};
+            decltype(nc) v(size(nc)+size(proj.second));
+            decltype(v)::iterator it;
+            it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
+            v.resize(it-begin(v));
 
-        //std::cout << "# Discretionary features: " << proj.second << std::endl;
-        //std::cout << "# Ratio Discretionary features: " << rdf << std::endl;
+            auto non_disc_features = int(size(v));
+            pred_0 = 0.;
+            pred_1 = 0.;
+            for(const auto& k: proj.first) {
+                r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                pred_0 += cb.e_intrinsic_strength[0][k.first] * r;
+                pred_1 += cb.e_intrinsic_strength[1][k.first] * r;
+            }
+            //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
+            auto pred = normalize_prediction(pred_0, pred_1, eta);
 
-        decltype(nc) v(size(nc)+size(proj.second));
-        decltype(v)::iterator it;
-        it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
-        v.resize(it-begin(v));
-
-        auto non_disc_features = int(size(v));
-        for(const auto& k: proj.first) {
-            auto r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-            pred_0 += cb.e_intrinsic_strength[0][k.first] * r;
-            pred_1 += cb.e_intrinsic_strength[1][k.first] * r;
+            //std::cout << "# Final Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
+            prediction = prediction_rule(pred, rdf, delta, gen);
+            avr_good += 1 - abs(outcomes[i] - prediction);
         }
-        //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-        auto a = pred_0;
-        auto b = pred_1;
-
-        if (a + b  + eta > 0) {
-            pred_0 = (a + eta) / (a + b  + eta);
-            pred_1 = b / (a + b + eta);
-        }
-        else {
-            pred_0 = 0;
-            pred_1 = 0;
-        }
-        //std::cout << "# Final Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-        auto prediction = int{0};
-        if(pred_1 > pred_0) {
-            prediction = 1;
-        }
-        //std::cout <<  "Prediction: " << prediction << " - Real value: " << outcomes[i] << std::endl;
-        if(rdf > delta) {
-            prediction = random_prediction(gen);
-        }
-        avr_good += 1 - abs(outcomes[i] - prediction);
         
-        cb.add_case(nc, o);
+        if(i < limit_examples) {
+            cb.add_case(nc, o);
+        }
         //cb.display();
         auto end_iteration = std::chrono::steady_clock::now();
         auto diff = end_iteration - start_iteration;
         auto iteration_time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-        //iteration_time /= 1000000.0;
         total_time += iteration_time;
 
-        cout << std::fixed << i << " " << outcomes[i] << " " << prediction << " " << avr_good << " " << avr_good / (i+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << " " << iteration_time << " " << total_time << endl;
+        if(!sample_out || i > limit_examples) {
+            auto c = j;
+            if(keep_offset) {
+                c = i;
+            }
+            cout << std::fixed << c << " " << outcomes[i] << " " << prediction << " " << avr_good << " " << avr_good / (j+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << " " << iteration_time << " " << total_time << endl;
+            ++j;
+        }
     }
     //cb.display();
 }
+
