@@ -26,9 +26,10 @@ int main(int argc, char** argv)
 
     TCLAP::ValueArg<string> cbFileArg("c", "casebase","File with the casebase description", true, "", "string", cmd);
     TCLAP::ValueArg<string> oFileArg("o", "outcomes","File with the outomes corresponding to the casebase", true, "", "string", cmd);
-    TCLAP::ValueArg<double> lArg("l","limit", "Limit on the number of cases to add into the casebase", false, -1, "int", cmd);
+    TCLAP::ValueArg<int> lArg("l","limit", "Limit on the number of cases to add into the casebase", false, -1, "int", cmd);
     TCLAP::SwitchArg sArg("s","sample-out","Start to calculate the prediction ratio after the training set", cmd, false);
     TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
+    TCLAP::ValueArg<int> nArg("n","starting-number", "Starting case number", false, 0, "int", cmd);
 
     cmd.parse(argc, argv);
 
@@ -60,9 +61,10 @@ int main(int argc, char** argv)
         return 3;
     }
 
+    auto starting_case = nArg.getValue(); // TODO: Test validity
     auto sample_out = sArg.getValue();
     auto keep_offset = kArg.getValue();
-    auto limit_examples = lArg.getValue();
+    auto limit_examples = lArg.getValue() + starting_case;
     if(limit_examples > size(cases)) {
         cout << "The limit is larger than the cases in the casebase. It will be set to the casebase size." << endl;
         limit_examples = size(cases);
@@ -115,7 +117,7 @@ int main(int argc, char** argv)
     std::mt19937 gen(rnd_device());
 
     auto j = 0;
-    for(auto i = 0; i < n_cases; ++i) {
+    for(auto i = starting_case; i < n_cases; ++i) {
         auto start_iteration = std::chrono::steady_clock::now();
         //std::cout << "Generating case " << i << std::endl;
         o = outcomes[i];
