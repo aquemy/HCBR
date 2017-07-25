@@ -30,6 +30,7 @@ int main(int argc, char** argv)
     TCLAP::SwitchArg sArg("s","sample-out","Start to calculate the prediction ratio after the training set", cmd, false);
     TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
     TCLAP::ValueArg<int> nArg("n","starting-number", "Starting case number", false, 0, "int", cmd);
+    TCLAP::SwitchArg rArg("r","shuffle","Shuffle the casebase (testing purposes)", cmd, false);
 
     cmd.parse(argc, argv);
 
@@ -90,12 +91,12 @@ int main(int argc, char** argv)
                                  return r + size(v);
                              }) / n_cases;
 
-    cout << "Cases: " << n_cases << endl;
-    cout << "Total features: " << total_features << endl;
-    cout << "Unique features: " << size(feature_map) << " (ratio: " << size(feature_map) / double(total_features) << ")" << endl;
-    cout << "Minimum case size: " << size(*min_e) << endl;
-    cout << "Maximum case size: " << size(*max_e) << endl;
-    cout << "Average case size: " << avg_features << endl;
+    cerr << "Cases: " << n_cases << endl;
+    cerr << "Total features: " << total_features << endl;
+    cerr << "Unique features: " << size(feature_map) << " (ratio: " << size(feature_map) / double(total_features) << ")" << endl;
+    cerr << "Minimum case size: " << size(*min_e) << endl;
+    cerr << "Maximum case size: " << size(*max_e) << endl;
+    cerr << "Average case size: " << avg_features << endl;
 
 
     // 2. Create the necessary variables
@@ -116,12 +117,20 @@ int main(int argc, char** argv)
     std::random_device rnd_device;
     std::mt19937 gen(rnd_device());
 
+    auto indexes = vector<int>(size(cases));
+    std::iota(begin(indexes), end(indexes), 0);
+
+    if(rArg.getValue()) {
+        cerr << "Shuffle the casebase..." << endl;
+        std::random_shuffle(begin(indexes), end(indexes));
+    }
+
     auto j = 0;
     for(auto i = starting_case; i < n_cases; ++i) {
         auto start_iteration = std::chrono::steady_clock::now();
-        //std::cout << "Generating case " << i << std::endl;
-        o = outcomes[i];
-        nc = cases[i];
+        //std::cerr << "Generating case " << i  << " | Index: " << indexes[i] << std::endl;
+        o = outcomes[indexes[i]];
+        nc = cases[indexes[i]];
         //std::cout << nc << " " << o << std::endl;
         if(!sample_out || i > limit_examples) 
         {
