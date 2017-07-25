@@ -11,8 +11,7 @@ ID_ROW=0
 REAL_ROW=1
 GUESS_ROW=2
 
-def main():
-    path = sys.argv[1]
+def main(path):
     file_name = path.split('/')[-1].split('.')[0]
 
     with open(path) as f:
@@ -136,31 +135,5 @@ def generate_gnuplot(path):
 
         
 if __name__ == '__main__':
-    main()
-
-'''
-plot 'res_full.txt' u 0:1 w l t 'Total', \
-    'res_full.txt' u 0:2 w l t 'Positive', \
-    'res_full.txt' u 0:3 w l t 'Negative', \
-    'res_full.txt' u 0:4 w l t 'Prevalence', \
-    'res_full.txt' u 0:5 w l t 'True Positive', \
-    'res_full.txt' u 0:6 w l t 'True Negative', \
-    'res_full.txt' u 0:7 w l t 'False Positive', \
-    'res_full.txt' u 0:8 w l t 'False Negative'
-'''
-
-'''
-plot 'res_full.txt' u 0:9 w l t 'True Positive Rate', \
-    'res_full.txt' u 0:10 w l t 'True Negative Rate', \
-    'res_full.txt' u 0:11 w l t 'Positive Prediction Value', \
-    'res_full.txt' u 0:12 w l t 'Negative Prediction Value', \
-    'res_full.txt' u 0:17 w l t 'Accuracy', \
-    'res_full.txt' u 0:18 w l t 'F1 Score', \
-    'res_full.txt' u 0:19 w l t 'Matthews correlation coefficient', \
-    'res_full.txt' u 0:20 w l t 'Diagnostic odds ratio'
-
-    #'res_full.txt' u 0:13 w l t 'False Negative Rate', \
-    #'res_full.txt' u 0:14 w l t 'False Positive Rate', \
-    #'res_full.txt' u 0:15 w l t 'False Discovery Rate', \
-    #'res_full.txt' u 0:16 w l t 'False Omission Rate', \
-'''
+    path = sys.argv[1]
+    main(path)
