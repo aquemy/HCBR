@@ -272,13 +272,18 @@ public:
             calculate_intrinsic_strength(0, e);
             calculate_intrinsic_strength(1, e);
         }
+        std::set<std::pair<int, int>> to_update;
         for (auto e: intersection_map) {
             for(auto c: e_to_c[e.first]) {
                 for(auto e2: c_to_e[c]) {
-                    c_to_e_overlap[0][c][e2] = mu(0, e2, c);
-                    c_to_e_overlap[1][c][e2] = mu(1, e2, c);
+                    to_update.insert(std::pair<int,int>(c,e2));
                 }
             }
+        }
+
+        for(auto e: to_update) {
+            c_to_e_overlap[0][e.first][e.second] = mu(0, e.second, e.first);
+            c_to_e_overlap[1][e.first][e.second] = mu(1, e.second, e.first);
         }
     }
 
@@ -330,12 +335,13 @@ public:
     /// \return Measure mu
     ////////////////////////////////////////////////////////////
     double mu(int o, int ei, int c) {
-        auto ei_details = intersection_family[ei];
+        const auto& ei_details = intersection_family[ei];
         auto total = double{0};
-        double top = e_to_outcome_count[ei][o] * case_overlap(cases[c], ei_details);
+        const auto& case_details = cases[c];
+        double top = e_to_outcome_count[ei][o] * case_overlap(case_details, ei_details);
 
         for(auto e: c_to_e[c]) {
-            total += e_to_outcome_count[e][o] * case_overlap(cases[c], intersection_family[e]);
+            total += e_to_outcome_count[e][o] * case_overlap(case_details, intersection_family[e]);
         }
 
         if(total == 0) {

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-mkdir res
+t=$(date +%s)
+out=res_${t}
+mkdir $out
 
 for i in `seq 0 500 8500`;
 do
