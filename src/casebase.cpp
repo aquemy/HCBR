@@ -272,19 +272,21 @@ public:
             calculate_intrinsic_strength(0, e);
             calculate_intrinsic_strength(1, e);
         }
-        std::set<std::pair<int, int>> to_update;
+        //std::set<std::pair<int, int>> to_update;
         for (auto e: intersection_map) {
             for(auto c: e_to_c[e.first]) {
                 for(auto e2: c_to_e[c]) {
-                    to_update.insert(std::pair<int,int>(c,e2));
+                    c_to_e_overlap[0][c][e2] = mu(0, e2, c);
+                    c_to_e_overlap[1][c][e2] = mu(1, e2, c);
+                    //to_update.insert(std::pair<int,int>(c,e2));
                 }
             }
         }
 
-        for(auto e: to_update) {
-            c_to_e_overlap[0][e.first][e.second] = mu(0, e.second, e.first);
-            c_to_e_overlap[1][e.first][e.second] = mu(1, e.second, e.first);
-        }
+        //for(auto e: to_update) {
+        //    c_to_e_overlap[0][e.first][e.second] = mu(0, e.second, e.first);
+        //    c_to_e_overlap[1][e.first][e.second] = mu(1, e.second, e.first);
+        //}
     }
 
     ////////////////////////////////////////////////////////////
