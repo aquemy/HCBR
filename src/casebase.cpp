@@ -327,9 +327,15 @@ public:
             intersection_map[ei] = inter;
         }
 
-        auto discretionary_features = std::vector<int>(std::size(new_case) - std::size(intersection));
-        std::set_difference(std::begin(new_case), std::end(new_case), std::begin(intersection), std::end(intersection), std::inserter(discretionary_features, std::begin(discretionary_features)));
-
+        auto discretionary_features = new_case;
+        for(auto f: intersection) {
+            discretionary_features.erase(
+                std::remove(std::begin(discretionary_features),
+                            std::end(discretionary_features),
+                            f),
+                std::end(discretionary_features)
+            );
+        }
         return {intersection_map , discretionary_features};
     }
 
