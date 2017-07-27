@@ -4,6 +4,14 @@
 #include <set>
 #include <tuple>
 
+namespace std {
+    template <class C>
+    constexpr auto size(const C& c) -> decltype(c.size())
+    {
+        return c.size();
+    }
+}
+
 ////////////////////////////////////////////////////////////
 /// \brief Count the unique features in a vector of cases
 ///
@@ -26,7 +34,7 @@ std::map<int, int> features_count(const std::vector<std::vector<int>>& cases) {
 }
 
 ////////////////////////////////////////////////////////////
-/// \brief Count the total amount of feature from 
+/// \brief Count the total amount of feature from
 ///        a feature map
 ///
 /// \param feature_map std::map (feature, occurrences)
@@ -54,13 +62,13 @@ auto random_prediction(auto gen) {
 }
 
 ////////////////////////////////////////////////////////////
-/// \brief Normalize a binary prediction with offset 
+/// \brief Normalize a binary prediction with offset
 ///
 /// \param pred_0 Weight for class 0
 /// \param pred_1 Weight for class 1
 /// \param eta offset for class 0
 ///
-/// \return tuple Prediction weigths in a tuple 
+/// \return tuple Prediction weigths in a tuple
 ////////////////////////////////////////////////////////////
 std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta) {
     double a = pred_0;
@@ -78,7 +86,7 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 }
 
 ////////////////////////////////////////////////////////////
-/// \brief Prediction rule 
+/// \brief Prediction rule
 ///
 /// \param pred_0 Weight for class 0
 /// \param pred_1 Weight for class 1
@@ -87,7 +95,7 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 ///
 /// \return int Final prediction (0 or 1)
 ////////////////////////////////////////////////////////////
-auto prediction_rule(auto pred, auto rdf, auto delta, auto gen) {
+int prediction_rule(auto pred, auto rdf, auto delta, auto gen) {
     auto prediction = 0;
     if(std::get<1>(pred) > std::get<0>(pred)) {
         prediction = 1;
@@ -133,7 +141,7 @@ inline double case_overlap(const std::vector<int>& ref, const std::vector<int>& 
             count++;
             j++;
             i++;
-        } 
+        }
         if (n[j] < ref[i]) {
             while(j < size_compare && n[j] < ref[i]) {
                 j++;
@@ -211,13 +219,13 @@ public:
                 for(auto f: e.second) {
                     intersection_family[e.first].erase(
                         std::remove(
-                            std::begin(intersection_family[e.first]), 
-                            std::end(intersection_family[e.first]), 
-                            f), 
+                            std::begin(intersection_family[e.first]),
+                            std::end(intersection_family[e.first]),
+                            f),
                         std::end(intersection_family[e.first])
                     );
                 }
-            
+
                 intersection_family.push_back(e.second);
                 auto index_ei = std::size(e_to_c);
                 auto index_last_ei = std::size(intersection_family) - 1;
@@ -243,9 +251,9 @@ public:
         auto discretionary_features = new_case;
         for(auto f: intersection) {
             discretionary_features.erase(
-                std::remove(std::begin(discretionary_features), 
-                            std::end(discretionary_features), 
-                            f), 
+                std::remove(std::begin(discretionary_features),
+                            std::end(discretionary_features),
+                            f),
                 std::end(discretionary_features)
             );
         }
@@ -326,7 +334,7 @@ public:
     }
 
     ////////////////////////////////////////////////////////////
-    /// \brief Calculate the measure Mu for a given case and intersecting element 
+    /// \brief Calculate the measure Mu for a given case and intersecting element
     ///
     /// \param o Case output
     /// \param ei Intersecting element
@@ -364,7 +372,7 @@ public:
     }
 
     void display() {
-        
+
         std::cout << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
         std::cout << "# Case composition" << std::endl;
         auto i = 0;

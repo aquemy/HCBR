@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     if(limit_examples > size(cases)) {
         cout << "The limit is larger than the cases in the casebase. It will be set to the casebase size." << endl;
         limit_examples = size(cases);
-    } 
+    }
     else if(limit_examples == -1) {
         limit_examples = size(cases);
     }
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
         o = outcomes[indexes[i]];
         nc = cases[indexes[i]];
         //std::cout << nc << " " << o << std::endl;
-        if(!sample_out || i > limit_examples) 
+        if(!sample_out || i > limit_examples)
         {
             proj = cb.projection(nc);
             rdf = std::size(proj.second) / double(std::size(nc));
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
             prediction = prediction_rule(pred, rdf, delta, gen);
             avr_good += 1 - abs(outcomes[i] - prediction);
         }
-        
+
         if(i < limit_examples) {
             cb.add_case(nc, o);
         }
