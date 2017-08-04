@@ -1,16 +1,10 @@
 #include <algorithm>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <set>
 #include <tuple>
 
-namespace std {
-    template <class C>
-    constexpr auto size(const C& c) -> decltype(c.size())
-    {
-        return c.size();
-    }
-}
 
 ////////////////////////////////////////////////////////////
 /// \brief Count the unique features in a vector of cases
@@ -273,6 +267,7 @@ public:
             }
         }
 
+        /*
         for (auto e: c_to_e[case_index])
         {
             c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
@@ -295,6 +290,32 @@ public:
             c_to_e_overlap[0][e.first][e.second] = mu(0, e.second, e.first);
             c_to_e_overlap[1][e.first][e.second] = mu(1, e.second, e.first);
         }
+        //*/
+    }
+
+    void calculate_strength() {
+        static bool calculated = false;
+        if(!calculated)
+        {
+            std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
+            for(auto case_index = 0; case_index < std::size(cases); case_index++)
+            {
+                std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
+                for (auto e = 0; e < std::size(intersection_family); e++)
+                {
+                    //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
+                    c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
+                    c_to_e_overlap[1][case_index][e] = mu(1, e, case_index);
+                }
+            }
+
+            for(auto e = 0; e < std::size(intersection_family); e++) {
+                std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                calculate_intrinsic_strength(0, e);
+                calculate_intrinsic_strength(1, e);
+            }
+        }
+        calculated = true;
     }
 
     ////////////////////////////////////////////////////////////
@@ -377,115 +398,159 @@ public:
         e_intrinsic_strength[o][ei] = all_strength;
     }
 
-    void display() {
+    auto best_features(int o, int max = 10) {
+        auto m = max;
+        if(std::size(e_intrinsic_strength[o]) < m)
+            m = std::size(e_intrinsic_strength[o]);
+        std::cout <<std::size(e_intrinsic_strength[o]) << " " << m << std::endl;
+        auto v0 = std::vector<int>(std::size(e_intrinsic_strength[o]));
+        std::iota(std::begin(v0), std::end(v0), 0);
+        std::sort(std::begin(v0), std::end(v0), [&](int i, int j) {
+            return e_intrinsic_strength[o][i] > e_intrinsic_strength[o][j]; });
+        auto res = std::vector<std::tuple<int, double>>(m);
+        for(auto i = 0; i < m; i++) {
+            //std::cout << v0[i] << " " << cb.e_intrinsic_strength[0][v0[i]] << std::endl;
+            //for(auto f: intersection_family[v0[i]]) {
+            res[i] = std::tuple<int, double>(v0[i], e_intrinsic_strength[o][v0[i]]);
+            //}
+        }
+        return res;
+    }
 
-        std::cout << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
-        std::cout << "# Case composition" << std::endl;
+    void display() {
+        std::fstream fs;
+        fs.open("casebase.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Case-base with " << m << " features and " << std::size(cases) << " cases" << std::endl;
+        fs << "# Case composition" << std::endl;
         auto i = 0;
         for(auto c: cases) {
-            std::cout << "C" << i << " -> ";
+            fs << "C" << i << " -> ";
             for(auto f: c) {
-                std::cout << "f" << f << " ";
+                fs << "f" << f << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
             i++;
         }
-
-        std::cout << "# Feature to Case mapping" << std::endl;
+        fs.close();
+        
+        fs.open("f_to_c.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Feature to Case mapping" << std::endl;
+        fs << "# feature count case_list" << std::endl;
         for(auto f: f_to_c) {
-            std::cout << "f" << f.first << " -> ";
+            fs << f.first << " " << std::size(f.second) << " ";
             for(auto c: f.second) {
-                std::cout << "C" << c << " ";
+                fs << c << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Intersection Family" << std::endl;
+        fs.close();
+        
+        fs.open("e_to_f.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Intersection Family" << std::endl;
+        fs << "# e count feature_list" << std::endl;
         i = 0;
         for(auto e: intersection_family) {
-            std::cout << "e" << i << " -> ";
+            fs << i << " " << std::size(e) << " ";
             for(auto f: e) {
-                std::cout << "f" << f << " ";
+                fs << f << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
             i++;
         }
-
-        std::cout << "# Feature to Ei mapping" << std::endl;
+        fs.close();
+        
+        fs.open("f_to_e.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Feature to Ei mapping" << std::endl;
         for(auto i = 0; i < std::size(f_to_e); ++i) {
-            std::cout << "f" << i << " -> ";
-            std::cout << "e" << f_to_e[i] << " ";
-            std::cout << std::endl;
+            fs << i << " ";
+            fs << f_to_e[i] << " ";
+            fs << std::endl;
         }
-
-        std::cout << "# Ei to case mapping" << std::endl;
+        fs.close();
+        
+        fs.open("e_to_c.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Ei to case mapping" << std::endl;
         for(auto e: e_to_c) {
-            std::cout << "e" << e.first << " -> ";
+            fs << e.first << " " << std::size(e.second) << " ";
             for(auto c: e.second) {
-                std::cout << "C" << c << " ";
+                fs << c << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Case to Ei mapping" << std::endl;
+        fs.close();
+        
+        fs.open("c_to_e.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Case to Ei mapping" << std::endl;
         for(auto c: c_to_e) {
-            std::cout << "C" << c.first << " -> ";
+            fs << c.first << " " << std::size(c.second) << " ";
             for(auto e: c.second) {
-                std::cout << "e" << e << " ";
+                fs << e << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Ei to Outcome mapping" << std::endl;
+        fs.close();
+        
+        fs.open("e_to_o.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Ei to Outcome mapping" << std::endl;
         for(auto e: e_to_outcome) {
-            std::cout << "e" << e.first << " -> ";
+            fs << e.first << " " << std::size(e.second) << " ";
             for(auto o: e.second) {
-                std::cout << o << " ";
+                fs << o << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Ei to Outcome count" << std::endl;
+        fs.close();
+        
+        fs.open("e_to_o_count.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Ei to Outcome count" << std::endl;
         for(auto e: e_to_outcome_count) {
-            std::cout << "e" << e.first << " -> ";
+            fs << e.first << " ";
             for(auto o: e.second) {
-                std::cout << o << " ";
+                fs << o << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Overlap Matrix" << std::endl;
+        fs.close();
+        
+        fs.open("overlap_matrix.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Overlap Matrix" << std::endl;
         for(int i=0; i < std::size(cases); ++i) {
-            std::cout << "# C" << i << " ";
+            //fs << "# C" << i << " ";
             for(int j=0; j < std::size(cases); ++j) {
-                std::cout << std::fixed << std::setprecision(3) << case_overlap(cases[i], cases[j]) << " ";
+                fs << std::fixed << std::setprecision(3) << case_overlap(cases[i], cases[j]) << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Intrinsic Strength" << std::endl;
+        fs.close();
+        
+        fs.open("intrinsic_strength.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Intrinsic Strength" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
-            std::cout << "e" << i << "-> (" << e_intrinsic_strength[0][i] << ", " << e_intrinsic_strength[1][i] <<  ")" << std::endl;
+            fs << std::fixed << i << " " << e_intrinsic_strength[0][i] << " " << e_intrinsic_strength[1][i] << std::endl;
         }
-
-        std::cout << "# Mu(0)" << std::endl;
+        fs.close();
+        
+        fs.open("mu_0.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Mu(0)" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
-            std::cout << "e" << i << ": ";
+            fs << "e" << i << ": ";
             for(int j=0; j < std::size(cases); ++j) {
-                std::cout << mu(0, i, j) << " ";
+                fs << mu(0, i, j) << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
-        std::cout << "# Mu(1)" << std::endl;
+        fs.close();
+        
+        fs.open("mu_1.log", std::fstream::in | std::fstream::out | std::fstream::app);
+        fs << "# Mu(1)" << std::endl;
         for(int i=0; i < std::size(intersection_family); ++i) {
-            std::cout << "e" << i << ": ";
+            fs << "e" << i << ": ";
             for(int j=0; j < std::size(cases); ++j) {
-                std::cout << mu(1, i, j) << " ";
+                fs << mu(1, i, j) << " ";
             }
-            std::cout << std::endl;
+            fs << std::endl;
         }
-
+        fs.close();
     }
 
     std::vector<std::vector<int>> intersection_family;                  ///< Intersecton elements
