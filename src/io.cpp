@@ -56,3 +56,32 @@ std::vector<bool> read_mapping(std::string path) {
     }
     return v;
 }
+
+
+////////////////////////////////////////////////////////////
+/// \brief Read features
+///
+/// \param path Path to the casebase file
+///
+/// \return The casebase description
+////////////////////////////////////////////////////////////
+std::map<int, std::string> read_features(std::string path) {
+    std::ifstream file(path);
+    std::map<int, std::string> f;
+    std::string line;
+
+    if (file) {
+        while (std::getline(file, line)) {
+            std::istringstream iss(line);
+            auto i = 0;
+            std::string c;
+            std::string v;
+            iss >> i;
+            iss >> c;
+            iss >> v;
+            f[i] = c + "=" + v;
+            //std::cout << i << " " <<  c + "=" + v << std::endl;
+        }
+    }
+    return f;
+}
