@@ -26,11 +26,14 @@ int main(int argc, char** argv)
 
     TCLAP::ValueArg<string> cbFileArg("c", "casebase","File with the casebase description", true, "", "string", cmd);
     TCLAP::ValueArg<string> oFileArg("o", "outcomes","File with the outomes corresponding to the casebase", true, "", "string", cmd);
+    TCLAP::ValueArg<string> fFileArg("f", "features","File with the feature mapping", false, "", "string", cmd);
     TCLAP::ValueArg<int> lArg("l","limit", "Limit on the number of cases to add into the casebase", false, -1, "int", cmd);
     TCLAP::SwitchArg sArg("s","sample-out","Start to calculate the prediction ratio after the training set", cmd, false);
     TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
     TCLAP::ValueArg<int> nArg("n","starting-number", "Starting case number", false, 0, "int", cmd);
     TCLAP::SwitchArg rArg("r","shuffle","Shuffle the casebase (testing purposes)", cmd, false);
+    TCLAP::SwitchArg vArg("v","log","Log the final casebase", cmd, true);
+    TCLAP::SwitchArg iArg("i","online","Online algorithm (strength calculated incrementally or at once after insertion)", cmd, false);
 
     cmd.parse(argc, argv);
 
@@ -44,12 +47,15 @@ int main(int argc, char** argv)
 
     const auto casebase_file = cbFileArg.getValue();
     const auto outcomes_file = oFileArg.getValue();
+    const auto features_file = fFileArg.getValue();
 
     auto cases = vector<vector<int>>();
     auto outcomes = vector<bool>();
+    auto features = std::map<int, string>();
     try {
         cases = read_case_base(casebase_file);
         outcomes = read_mapping(outcomes_file);
+        features = read_features(features_file);
         if(size(cases) == 0)
             throw std::domain_error("The casebase file could not be found or is empty.");
         if(size(outcomes) == 0)
@@ -62,6 +68,8 @@ int main(int argc, char** argv)
         return 3;
     }
 
+    auto online = iArg.getValue();
+    auto verbose = vArg.getValue();
     auto starting_case = nArg.getValue(); // TODO: Test validity
     auto sample_out = sArg.getValue();
     auto keep_offset = kArg.getValue();
@@ -90,7 +98,8 @@ int main(int argc, char** argv)
                             [](int& r, const vector<int>& v) {
                                  return r + size(v);
                              }) / n_cases;
-
+    cerr << "Online: " << online << endl;
+    cerr << "Verbose level: " << verbose << endl;
     cerr << "Cases: " << n_cases << endl;
     cerr << "Total features: " << total_features << endl;
     cerr << "Unique features: " << size(feature_map) << " (ratio: " << size(feature_map) / double(total_features) << ")" << endl;
@@ -134,6 +143,8 @@ int main(int argc, char** argv)
         //std::cout << nc << " " << o << std::endl;
         if(!sample_out || i > limit_examples)
         {
+            if(!online)
+                cb.calculate_strength();
             proj = cb.projection(nc);
             rdf = std::size(proj.second) / double(std::size(nc));
             //std::cout << "# Discretionary features: " << proj.second << std::endl;
@@ -147,11 +158,43 @@ int main(int argc, char** argv)
             auto non_disc_features = int(size(v));
             pred_0 = 0.;
             pred_1 = 0.;
+            auto res_0 = vector<std::tuple<int, double, double>>();
+            auto res_1 = vector<std::tuple<int, double, double>>();
             for(const auto& k: proj.first) {
                 r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                pred_0 += cb.e_intrinsic_strength[0][k.first] * r;
-                pred_1 += cb.e_intrinsic_strength[1][k.first] * r;
+                pred_0 += r * cb.e_intrinsic_strength[0][k.first];
+                pred_1 += r * cb.e_intrinsic_strength[1][k.first];
+                res_0.push_back(std::tuple<int, double, double>(k.first, pred_0, r));
+                res_1.push_back(std::tuple<int, double, double>(k.first, pred_1, r));
             }
+            std::sort(std::begin(res_0), std::end(res_0), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
+                return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j); });
+
+            std::sort(std::begin(res_1), std::end(res_1), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
+                return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j) ; });
+
+
+            /*
+            std::cout << "Case: " << nc << std::endl;
+            for(auto f: nc) {
+                cout << features[f] << " ";
+            }
+            cout << endl;
+            std::cout << "For class 0: " << std::endl;
+            auto max = size(res_0);
+            if(size(res_0) < max)
+                max = size(res_0);
+            for(auto i = 0; i < max; ++i) {
+                auto fs = cb.intersection_family[std::get<0>(res_0[i])];
+                std::cout << "e" << std::get<0>(res_0[i]) << " s0=" << std::get<1>(res_0[i])  <<" s1=" << std::get<1>(res_1[i]) << " r=" << std::get<2>(res_0[i]) << " ";
+                //pred_0 += std::get<1>(res_0[i]) * std::get<2>(res_0[i]);
+                for(auto f: fs) {
+                    cout << features[f] << " ";
+                }
+                cout << endl;
+            }
+            //*/
+
             //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
             auto pred = normalize_prediction(pred_0, pred_1, eta);
 
@@ -161,7 +204,8 @@ int main(int argc, char** argv)
         }
 
         if(i < limit_examples) {
-            cb.add_case(nc, o);
+            //cerr << "Add " << i << " / " << limit_examples << endl;
+            cb.add_case(nc, o, online);
         }
         //cb.display();
         auto end_iteration = std::chrono::steady_clock::now();
@@ -178,6 +222,22 @@ int main(int argc, char** argv)
             ++j;
         }
     }
-    //cb.display();
+    if(verbose) {
+        cb.display();
+    }
+    /*
+    auto best_0 = cb.best_features(0, 10);
+    std::cerr << "BEST E" << std::endl;
+    for(auto i = 0; i < size(cb.intersection_family); ++i) {
+        cout << abs(cb.e_intrinsic_strength[0][i] - cb.e_intrinsic_strength[1][i]) / (cb.e_intrinsic_strength[0][i] + cb.e_intrinsic_strength[1][i]) << " " << cb.e_intrinsic_strength[0][i] << " " << cb.e_intrinsic_strength[1][i] << " ";
+        auto fs = cb.intersection_family[i];
+        for(auto f: fs) {
+            cout << features[f] << " ";
+        }
+        cout << endl;
+    }
+    //*/
 }
+
+
 
