@@ -9,8 +9,8 @@ Expected format for the input file:
 ID_ROW=0
 REAL_ROW=1
 GUESS_ROW=2
-W1_ROW = 8# 5
-W0_ROW = 9# 6
+W1_ROW = 5
+W0_ROW = 6
 
 def main():
     path = sys.argv[1]
@@ -116,7 +116,7 @@ def generate_gnuplot(path):
             set yrange [0.0:0.15]\n",
 
             "set key top right\n\
-            set yrange [-0.15:0.15]\n"
+            set yrange [-0.005:0.005]\n"
         ]
 
     base_name = path
