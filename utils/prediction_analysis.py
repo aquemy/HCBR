@@ -113,10 +113,10 @@ def generate_gnuplot(path):
         ]
 
     keys_and_ranges = ["set key top right\n\
-            set yrange [0.0:0.15]\n",
+            #set yrange [0.0:2]\n",
 
             "set key top right\n\
-            set yrange [-0.005:0.005]\n"
+           # set yrange [-0.003:0.003]\n"
         ]
 
     base_name = path

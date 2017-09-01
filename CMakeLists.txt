@@ -48,6 +48,7 @@ set(FILES
     )
 
 add_executable(hcbr src/sequence.cpp ${FILES})
+add_executable(hcbr_learning src/learning_sequence.cpp ${FILES})
 
 ######################################################################################
 ### 3) Include Tests

@@ -64,18 +64,41 @@ auto random_prediction(auto gen) {
 ///
 /// \return tuple Prediction weigths in a tuple
 ////////////////////////////////////////////////////////////
-std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta) {
+std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta, double delta, double avg_0, double avg_1) {
     double a = pred_0;
     double b = pred_1;
+    return std::tuple<double, double>(pred_0, pred_1);
+    /*
+    if (a + delta + b  + eta + delta > 0) {
+        pred_0 = (a + eta) / (a + b  + eta + delta);
+        pred_1 = (b + delta) / (a + b + eta + delta);
+    }*/
 
-    if (a + b  + eta > 0) {
-        pred_0 = (a + eta) / (a + b  + eta);
-        pred_1 = b / (a + b + eta);
+    if (a + b > 0 || eta > 0) {
+        pred_0 = (a + eta + avg_0) / (a  + b + eta + avg_0 + avg_1);
+        pred_1 = (b + avg_1) / (a + b + eta + avg_0 + avg_1);
+
+        //pred_0 += avg_0;
+        //pred_1 -= avg_1;
+        /*
+        if(pred_1 - pred_0 > 0 && pred_1 - pred_0 < eta) {
+            auto t = pred_1;
+            pred_1 =pred_0;
+            pred_0 = t;
+        }
+        ///
+        if(pred_0 - pred_1 > 0 && pred_0 - pred_1 < delta) {
+            auto t = pred_1;
+            pred_1 =pred_0;
+            pred_0 = t;
+        }
+        //*/
     }
     else {
         pred_0 = 0;
         pred_1 = 0;
     }
+
     return std::tuple<double, double>(pred_0, pred_1);
 }
 
@@ -89,14 +112,44 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 ///
 /// \return int Final prediction (0 or 1)
 ////////////////////////////////////////////////////////////
-int prediction_rule(auto pred, auto rdf, auto delta, auto gen) {
+int prediction_rule(auto pred, auto rdf, auto delta, auto eta, auto gen) {
     auto prediction = 0;
     if(std::get<1>(pred) > std::get<0>(pred)) {
         prediction = 1;
+
     }
-    if(rdf > delta) {
-        //prediction = random_prediction(gen);
+
+
+    /*
+    if(prediction == 1) {
+        if(abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<1>(pred) < 0.0001) {
+            prediction = 0;
+            std::cerr << "R1 " << abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<1>(pred) << std::endl;
+        }
+    } else if(prediction == 0)
+    {
+        if(abs(std::get<0>(pred) - std::get<1>(pred)) / std::get<0>(pred) < 0.0001) {
+            prediction = 1;
+            std::cerr << "R0 " << abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<0>(pred) << std::endl;
+        }
+        
     }
+    */
+    //if(rdf > delta) {
+    /*
+    if(eta < 0) {
+        std::cerr << delta << " " << std::get<1>(pred) - std::get<0>(pred) << " " << std::get<1>(pred) << " " << std::get<0>(pred) << " ";
+        if(std::get<1>(pred) > std::get<0>(pred) && (std::get<1>(pred) - std::get<0>(pred)) < delta) {
+            std::cerr << " R ";
+            prediction = random_prediction(gen);
+        }
+        std::cerr << std::endl;
+    }
+    else {
+        if(std::get<0>(pred) > std::get<1>(pred) && (std::get<0>(pred) - std::get<1>(pred)) < delta) {
+            prediction = random_prediction(gen);
+        }
+    }*/
     return prediction;
 }
 
@@ -294,6 +347,24 @@ public:
         }
     }
 
+    void calculate_strength_() {
+        static std::random_device rnd_device;
+        static std::mt19937 gen(rnd_device());
+        //std::srand(std::time(0));
+        static bool calculated = false;
+        if(!calculated)
+        {
+            std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
+            for(auto e = 0; e < std::size(intersection_family); e++) {
+                std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                e_intrinsic_strength[0][e] = std::generate_canonical<double, 128>(gen);
+                e_intrinsic_strength[1][e] = std::generate_canonical<double, 128>(gen);
+                std::cerr << e_intrinsic_strength[0][e] << " " << e_intrinsic_strength[1][e] << std::endl;
+           }
+        }
+        calculated = true;
+    }
+
     void calculate_strength() {
         static bool calculated = false;
         if(!calculated)
@@ -397,6 +468,14 @@ public:
             all_strength = ei_strength / all_strength;
         }
         e_intrinsic_strength[o][ei] = all_strength;
+    }
+
+    void calculate_intrinsic_strength_(int o, int ei) {
+        if(o == 0)
+            e_intrinsic_strength[o][ei] = 0.5;
+        else
+            e_intrinsic_strength[o][ei] = 0.51;
+
     }
 
     auto best_features(int o, int max = 10) {
@@ -557,6 +636,7 @@ public:
     std::vector<std::vector<int>> intersection_family;                  ///< Intersecton elements
     std::map<int, std::map<int, double>> e_intrinsic_strength;          ///< Intrinsic strength of intersecting elements
     std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap; ///< Overlapping value between cases and intersecting elements
+    std::vector<std::vector<int>> cases;                        ///< List of cases
 
 private:
 
@@ -572,7 +652,7 @@ private:
 
     int m;                                                      ///< Number of unique features
     int max_k;                                                  ///< Maximal number of cases (used for pre-allocation)
-    std::vector<std::vector<int>> cases;                        ///< List of cases
+    
     std::vector<int> outcomes;                                  ///< List of outcomes
     std::map<int, std::vector<int>> f_to_c;                     ///< Mapping feature to cases
     std::map<int, int> f_to_e;                                  ///< Mapping feature to intersecting elements

@@ -34,14 +34,15 @@ int main(int argc, char** argv)
     TCLAP::SwitchArg rArg("r","shuffle","Shuffle the casebase (testing purposes)", cmd, false);
     TCLAP::SwitchArg vArg("v","log","Log the final casebase", cmd, true);
     TCLAP::SwitchArg iArg("i","online","Online algorithm (strength calculated incrementally or at once after insertion)", cmd, false);
+    TCLAP::ValueArg<int> pArg("p","phases","Number of learning phases)", false, 0, "int", cmd);
 
     cmd.parse(argc, argv);
 
     // 1. DATA
     // 1.1 CMD verification
     const auto delta = deltaArg.getValue();
-    if(delta < 0 || delta > 1)
-        throw std::domain_error("Delta must belong to [0,1]");
+    //if(delta < -1 || delta > 1)
+    //    throw std::domain_error("Delta must belong to [-1,1]");
 
     const auto eta = etaArg.getValue();
 
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
         return 3;
     }
 
+    auto max_learning_iterations = pArg.getValue();
     auto online = iArg.getValue();
     auto verbose = vArg.getValue();
     auto starting_case = nArg.getValue(); // TODO: Test validity
@@ -121,6 +123,15 @@ int main(int argc, char** argv)
     auto pred_1 = 0.;
     auto r = 0.;
     auto rdf = 0.;
+    auto avr_good_0 = 0.;
+    auto avr_good_1 = 0.;
+    auto avr_bad_0 = 0.;
+    auto avr_bad_1 = 0.;
+    auto nb_bad_0 = 0;
+    auto nb_bad_1 = 0;
+    auto nb_good_0 = 0;
+    auto nb_good_1 = 0;
+    std::tuple<double, double> pred;
 
     // 3. Initialize the random generator
     std::random_device rnd_device;
@@ -141,71 +152,124 @@ int main(int argc, char** argv)
         o = outcomes[indexes[i]];
         nc = cases[indexes[i]];
         //std::cout << nc << " " << o << std::endl;
-        if(!sample_out || i > limit_examples)
+
+        for(auto iter = 0; iter < max_learning_iterations; ++iter) 
         {
-            if(!online)
-                cb.calculate_strength();
-            proj = cb.projection(nc);
-            rdf = std::size(proj.second) / double(std::size(nc));
-            //std::cout << "# Discretionary features: " << proj.second << std::endl;
-            //std::cout << "# Ratio Discretionary features: " << rdf << std::endl;
+            cerr << " - Phase " << iter + 1 << endl;
+            //avr_good = 0.;
+            avr_good_1 = 0.;
+            avr_good_0 = 0.;
+            avr_bad_1 = 0.;
+            avr_bad_0 = 0.;
+            nb_bad_0 = 0;
+            nb_bad_1 = 0;
+            nb_good_0 = 0;
+            nb_good_1 = 0;
 
-            decltype(nc) v(size(nc)+size(proj.second));
-            decltype(v)::iterator it;
-            it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
-            v.resize(it-begin(v));
+            if(!sample_out || i > limit_examples)
+            {
+                if(!online)
+                    cb.calculate_strength();
+                proj = cb.projection(nc);
+                rdf = std::size(proj.second) / double(std::size(nc));
+                //std::cout << "# Discretionary features: " << proj.second << std::endl;
+                //std::cout << "# Ratio Discretionary features: " << rdf << std::endl;
 
-            auto non_disc_features = int(size(v));
-            pred_0 = 0.;
-            pred_1 = 0.;
-            auto res_0 = vector<std::tuple<int, double, double>>();
-            auto res_1 = vector<std::tuple<int, double, double>>();
-            for(const auto& k: proj.first) {
-                r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                pred_0 += r * cb.e_intrinsic_strength[0][k.first];
-                pred_1 += r * cb.e_intrinsic_strength[1][k.first];
-                res_0.push_back(std::tuple<int, double, double>(k.first, pred_0, r));
-                res_1.push_back(std::tuple<int, double, double>(k.first, pred_1, r));
-            }
-            std::sort(std::begin(res_0), std::end(res_0), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
-                return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j); });
+                decltype(nc) v(size(nc)+size(proj.second));
+                decltype(v)::iterator it;
+                it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
+                v.resize(it-begin(v));
 
-            std::sort(std::begin(res_1), std::end(res_1), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
-                return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j) ; });
+                auto non_disc_features = int(size(v));
+                pred_0 = 0.;
+                pred_1 = 0.;
+                auto res_0 = vector<std::tuple<int, double, double>>();
+                auto res_1 = vector<std::tuple<int, double, double>>();
+                for(const auto& k: proj.first) {
+                    r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                    pred_0 += r * cb.e_intrinsic_strength[0][k.first];
+                    pred_1 += r * cb.e_intrinsic_strength[1][k.first];
+                    res_0.push_back(std::tuple<int, double, double>(k.first, pred_0, r));
+                    res_1.push_back(std::tuple<int, double, double>(k.first, pred_1, r));
+                }
+                std::sort(std::begin(res_0), std::end(res_0), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
+                    return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j); });
+
+                std::sort(std::begin(res_1), std::end(res_1), [&](std::tuple<int, double, double>& i, std::tuple<int, double, double>& j) {
+                    return std::get<1>(i) * std::get<2>(i) > std::get<1>(j) * std::get<2>(j) ; });
 
 
-            /*
-            std::cout << "Case: " << nc << std::endl;
-            for(auto f: nc) {
-                cout << features[f] << " ";
-            }
-            cout << endl;
-            std::cout << "For class 0: " << std::endl;
-            auto max = size(res_0);
-            if(size(res_0) < max)
-                max = size(res_0);
-            for(auto i = 0; i < max; ++i) {
-                auto fs = cb.intersection_family[std::get<0>(res_0[i])];
-                std::cout << "e" << std::get<0>(res_0[i]) << " s0=" << std::get<1>(res_0[i])  <<" s1=" << std::get<1>(res_1[i]) << " r=" << std::get<2>(res_0[i]) << " ";
-                //pred_0 += std::get<1>(res_0[i]) * std::get<2>(res_0[i]);
-                for(auto f: fs) {
+                /*
+                std::cout << "Case: " << nc << std::endl;
+                for(auto f: nc) {
                     cout << features[f] << " ";
                 }
                 cout << endl;
+                std::cout << "For class 0: " << std::endl;
+                auto max = size(res_0);
+                if(size(res_0) < max)
+                    max = size(res_0);
+                for(auto i = 0; i < max; ++i) {
+                    auto fs = cb.intersection_family[std::get<0>(res_0[i])];
+                    std::cout << "e" << std::get<0>(res_0[i]) << " s0=" << std::get<1>(res_0[i])  <<" s1=" << std::get<1>(res_1[i]) << " r=" << std::get<2>(res_0[i]) << " ";
+                    //pred_0 += std::get<1>(res_0[i]) * std::get<2>(res_0[i]);
+                    for(auto f: fs) {
+                        cout << features[f] << " ";
+                    }
+                    cout << endl;
+                }
+                //*/
+
+                //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
+                //pred = normalize_prediction(pred_0, pred_1, eta, delta);
+                pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0);
+
+                //std::cout << "# Final Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
+                prediction = prediction_rule(pred, rdf, delta, eta, gen);
+                if (iter == 0)
+                    avr_good += 1 - abs(outcomes[i] - prediction);
+
+                if(prediction == 1 && outcomes[i] - prediction == 0) {
+                    avr_good_1 += std::get<1>(pred) - std::get<0>(pred);
+                    nb_good_1++;
+                }
+                if(prediction == 0 && outcomes[i] - prediction == 0) {
+                    avr_good_0 += std::get<1>(pred) - std::get<0>(pred);
+                    nb_good_0++;
+                }
+
+                if(prediction == 1 && outcomes[i] - prediction != 0) {
+                    avr_bad_1 += std::get<1>(pred) - std::get<0>(pred);
+                    nb_bad_1++;
+                }
+                if(prediction == 0 && outcomes[i] - prediction != 0) {
+                    avr_bad_0 += std::get<1>(pred) - std::get<0>(pred);
+                    nb_bad_0++;
+                }
+
+                if(abs(outcomes[i] - prediction) != 0) {
+                    for(const auto& k: proj.first) {
+                        if(prediction == 1) {
+                            r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                            //cb.e_intrinsic_strength[0][k.first] += double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            //cb.e_intrinsic_strength[1][k.first] -= double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[0][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[1][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                        } else {
+                            r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                            //cb.e_intrinsic_strength[0][k.first] -= double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            //cb.e_intrinsic_strength[1][k.first] += double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[0][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[1][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                        }
+                    }
+                }
             }
-            //*/
 
-            //std::cout << "# Raw Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-            auto pred = normalize_prediction(pred_0, pred_1, eta);
-
-            //std::cout << "# Final Pred(1,0)=(" << pred_0 << ", " << pred_1 << ")" << std::endl;
-            prediction = prediction_rule(pred, rdf, delta, gen);
-            avr_good += 1 - abs(outcomes[i] - prediction);
-        }
-
-        if(i < limit_examples) {
-            //cerr << "Add " << i << " / " << limit_examples << endl;
-            cb.add_case(nc, o, online);
+            if(i < limit_examples) {
+                //cerr << "Add " << i << " / " << limit_examples << endl;
+                cb.add_case(nc, o, online);
+            }
         }
         //cb.display();
         auto end_iteration = std::chrono::steady_clock::now();
@@ -218,7 +282,21 @@ int main(int argc, char** argv)
             if(keep_offset) {
                 c = i;
             }
-            cout << std::fixed << c << " " << outcomes[i] << " " << prediction << " " << avr_good << " " << avr_good / (j+1) << " " << pred_1 << " " << pred_0 << " " << rdf << " " << pred_0 + rdf + eta << " " << iteration_time << " " << total_time << endl;
+            cout << std::fixed << c << " " 
+                 << outcomes[i] << " " 
+                 << prediction << " " 
+                 << avr_good << " " 
+                 << avr_good / (j+1) << " " 
+                 << std::get<1>(pred) << " " 
+                 << std::get<0>(pred) << " " 
+                 << rdf << " " 
+                 << pred_0 + rdf + eta << " " 
+                 << iteration_time << " " 
+                 << total_time << " " 
+                 << std::get<1>(pred) - std::get<0>(pred) << " "
+                 << avr_bad_1 / (j+1) << " "
+                 << avr_bad_0 / (j+1) << " "
+                 << endl;
             ++j;
         }
     }
