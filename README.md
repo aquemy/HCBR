@@ -1,6 +1,28 @@
 # Hypergraph Case-Based Reasoning
 
-# Experimental results
+# Experimentations
+
+## Protocol
+
+Each dataset is split into 60% as Examples set and 40% as Query set.
+
+Here are provided the exact command line used to obtain the results described below:
+
+| Dataset | Command line |
+| ------------- | --------------- |
+| adult | ```./hcbr_learning -c adult_casebase.txt -o adult_outcomes.txt -l 13535 -s -v -p 1 -e -0.0075 -d 0.0001```    |
+| audiology | ```./hcbr_learning -c audiology_casebase.txt -o audiology_outcomes.txt -l 120 -s -v -p 125 -e 0.0 -d 0.```    |
+| breast | ```./hcbr_learning -c breast_casebase.txt -o breast_outcomes.txt -l 410 -s -v -p 1 -e 0.0 -d 0.```    |
+| heart | ```./hcbr_learning -c heart_casebase.txt -o heart_outcomes.txt -l 162 -s -v -p 5 -e 0.0 -d 0.```    |
+| mushroom | ```./hcbr_learning -c mushrooms_casebase.txt -o mushrooms_outcomes.txt -l 4874 -s -v -p 200 -e 0.0002 -d 0.```|
+| phishing | ```./hcbr_learning -c phishing_casebase.txt -o phishing_outcomes.txt -l 6633 -s -v -p 5 -e 0.0 -d 0.```|
+| skin | ```./hcbr_learning -c skin_casebase.txt -o skin_outcomes.txt -l 147034 -s -v -p 1 -e 0.0 -d 0.```|
+| splice: | ```./hcbr_learning -c splice_casebase.txt -o splice_outcomes.txt -l 1905 -s -v -p 1 -e 0.0 -d 0.```|
+
+
+## Datasets
+
+[Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) and [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html) datasets:
 
 |               | Cases           | Total Features  | Unique Features | Min. Size | Max. Size | Average Size |
 | ------------- |:---------------:| ---------------:|:---------------:|:---------:|:---------:|:------------:|
@@ -13,23 +35,23 @@
 | **skin**          | 245057 | 734403 | 768 | 3 | 3 | 3 |
 | **splice**        | 3175 | 193434 | 241 | 61 | 61 | 61 |
 
-
-## Adult
+## Results
+### Adult
 
 Confusion matrix:
 
-|               | **Predicted 1**     | **Predicted 0**     |       |
-| ------------- |:---------------:|:---------------:|:-----:|
-| **Real 1**        | 13232           | 1218            |       |
-| **Real 0**        | 1205            | 3370            |       |
-| **Total**         | 14437           | 4588            | 19025 |
+|                   | **Predicted 1**     | **Predicted 0** |       |
+| ----------------- |:-------------------:|:---------------:|:-----:|
+| **Real 1**        | 13232               | 1218            |       |
+| **Real 0**        | 1205                | 3370            |       |
+| **Total**         | 14437               | 4588            | 19025 |
 
 
 Performances indicators:
 
 |                           |        |
 | ------------------------- |:------:|
-| **Accuracy**                  | 0.8726 |
+| **Accuracy**              | 0.8726 |
 | Prevalence                | 0.7588 |
 | True positive rate        | 0.9165 |
 | False positive rate       | 0.2655 |
@@ -48,7 +70,7 @@ Performances indicators:
 ![ROC curve](results/adult/adult_res_diff_pred_1.png)
 ![ROC curve](results/adult/adult_AUC.png)
 
-## Audiology
+### Audiology
 
 Confusion matrix:
 
@@ -82,7 +104,7 @@ Performances indicators:
 ![ROC curve](results/audiology/audiology_res_diff_pred_1.png)
 ![ROC curve](results/audiology/audiology_AUC.png)
 
-## Breast
+### Breast
 
 Confusion matrix:
 
@@ -116,7 +138,7 @@ Performances indicators:
 ![ROC curve](results/breast/breast_res_diff_pred_1.png)
 ![ROC curve](results/breast/breast_AUC.png)
 
-## Heart
+### Heart
 
 Confusion matrix:
 
@@ -149,7 +171,7 @@ Performances indicators:
 ![ROC curve](results/heart/heart_res_diff_pred_1.png)
 ![ROC curve](results/heart/heart_AUC.png)
 
-## Mushrooms
+### Mushrooms
 
 Confusion matrix:
 
@@ -182,7 +204,7 @@ Performances indicators:
 ![ROC curve](results/mushrooms/mushrooms_res_diff_pred_1.png)
 ![ROC curve](results/mushrooms/mushrooms_AUC.png)
 
-## Phishing
+### Phishing
 
 Confusion matrix:
 
@@ -215,7 +237,7 @@ Performances indicators:
 ![ROC curve](results/phishing/phishing_res_diff_pred_1.png)
 ![ROC curve](results/phishing/phishing_AUC.png)
 
-## Skin
+### Skin
 
 Confusion matrix:
 
@@ -249,7 +271,7 @@ Performances indicators:
 ![ROC curve](results/skin/skin_res_diff_pred_1.png)
 ![ROC curve](results/skin/skin_AUC.png)
 
-## Splice
+### Splice
 
 Confusion matrix:
 
