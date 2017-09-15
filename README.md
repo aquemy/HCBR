@@ -1,3 +1,13 @@
+# Requirements & Dependencies:
+
+- Cmake >= 2.8
+- Compiler supporting C++17
+- Compiler support OpenMP >= 5
+- Doxygen (optional)
+
+No external libraries!    
+Include [```tclap```](https://github.com/eile/tclap) for the CLI.
+
 # Installation & Build
 
 ```
