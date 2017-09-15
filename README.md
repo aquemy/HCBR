@@ -1,4 +1,39 @@
-# Hypergraph Case-Based Reasoning
+# Installation & Build
+
+```
+mkdir build && cmake .. -DCMAKE_BUILD_TYPE=Release
+```
+
+The build process creates two executables: ```hcbr``` and ```hcbr_learning```. The first is dedicated to sequential learning and temporal dataset while the second one can be used for any dataset. At this moment, it is highly recommended to use the second one only.
+
+# Documentation
+
+The help can be obtained using ```./hcbr_learning -h```.
+
+The most usual command line is: ```./hcbr_learning -c <casebase.txt> -o <outcomes.txt> -l <nb_examples> -e 0. -d 0. -p <nb_learning_phases>```
+
+- -o <string>,  --outcomes <string>: (required)  File with the outomes corresponding to the casebase
+- -c <string>,  --casebase <string>: (required)  File with the casebase description
+
+- -p <int>,  --phases <int>: Number of learning phases
+- -i,  --online: Online algorithm (strength calculated incrementally or at once after insertion)
+- -v, --log: Log the final casebase description
+- -r,  --shuffle: Shuffle the casebase (testing purposes)
+- -n <int>,  --starting-number <int>: Starting case number
+- -k,  --keep-offset: Keep the offset in the case number even with the sample-out option
+- -s,  --sample-out: Start to calculate the prediction ratio after the training set
+- -l <int>,  --limit <int>: Limit on the number of cases to add into the casebase
+- -f <string>,  --features <string>: File with the feature mapping
+- -d <double>,  --delta <double>: Hyperparameter to control the information treshold. Must be in [0,1].
+- -e <double>,  --eta <double>: Hyperparameter to add an offset to the default class for prediction
+- --version: Displays version information and exits.
+
+
+
+# Publications
+
+- **Classification With Hypergraph Case-Based Reasoning**, Alexandre Quemy, To appear
+- **Predicting Justice decisions with Hypergraph Case-Based Reasoning**, Alexandre Quemy, To appear
 
 # Experimentations
 
