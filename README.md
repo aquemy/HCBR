@@ -47,6 +47,10 @@ The most usual command line is: ```./hcbr_learning -c <casebase.txt> -o <outcome
 
 # Experimentations
 
+## One-Click Reproducibility
+
+
+
 ## Protocol
 
 Each dataset is split into 60% as Examples set and 40% as Query set.
@@ -64,7 +68,6 @@ Here are provided the exact command line used to obtain the results described be
 | skin | ```./hcbr_learning -c skin_casebase.txt -o skin_outcomes.txt -l 147034 -s -v -p 1 -e 0.0 -d 0.```|
 | splice: | ```./hcbr_learning -c splice_casebase.txt -o splice_outcomes.txt -l 1905 -s -v -p 1 -e 0.0 -d 0.```|
 
-
 ## Datasets
 
 [Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) and [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html) datasets:
@@ -79,6 +82,17 @@ Here are provided the exact command line used to obtain the results described be
 | **phishing**      | 11055 | 330836 | 814 | 30 | 30 | 30 |
 | **skin**          | 245057 | 734403 | 768 | 3 | 3 | 3 |
 | **splice**        | 3175 | 193434 | 241 | 61 | 61 | 61 |
+
+## Analysis Tools
+
+- **Confusion matrix:** Calculate the confusion matrix and return GNUplot scripts to print the evolution of the different indicators classification after classification.    
+Usage: ```python utils/confusion_matrix.py <output_from_hcbr.txt>```
+
+- **ROC curve:** Calculate and display the Receiver operating characteristic and Area Under the Curve.    
+Usage: ```python utils/roc.py <output_from_hcbr.txt>```
+
+- **Prediction Analysis:** Generate GNUplot scripts to display the difference of class support indicators for right and wrong classified points.     
+Usage: ```python utils/prediction_analysis.py <output_from_hcbr.txt>```
 
 ## Results
 ### Adult
