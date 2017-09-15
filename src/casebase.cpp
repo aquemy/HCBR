@@ -200,7 +200,7 @@ inline double case_overlap(const std::vector<int>& ref, const std::vector<int>& 
             }
         }
     }
-    return count / double(size_iterate);
+    return count / (double(size_iterate));// + double(size_compare) - count);
 }
 
 
