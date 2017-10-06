@@ -5,8 +5,7 @@ import sys
 def feature_to_index(cases, column_nb, offset=0):
     feature_set = set()
     for case in cases:
-        if len(case) > column_nb:
-            feature_set.add(case[column_nb])
+        feature_set.add(case[column_nb])
     l = list(feature_set)
     index = {}
     i = 0
@@ -20,11 +19,7 @@ def filter_cases(cases, except_features):
     features_index = []
     features_mapping = {}
     offset = 0
-    m = len(cases[0])
-    for c in cases:
-        if len(c) > m:
-            m = len(c)
-    for j, f in enumerate([i for i in range(0, m) if i not in except_features]):
+    for j, f in enumerate([i for i in range(0, len(cases[0])) if i not in except_features]):
         feat = feature_to_index(cases, f, offset)
         features_index.append(feat)
         features_mapping[f] = j
@@ -50,7 +45,8 @@ def read_cases(path):
         reader = csvfile.readlines()
         n = len(reader[0].split(' '))
         for i, row in enumerate(reader):
-            cases.append(row.split(' '))
+            if len(row.split(' ')) == n:
+                cases.append(row.split(' '))
 
     return cases
 
@@ -62,7 +58,7 @@ def main():
     cases = read_cases(path)
 
     outcome_row = 0
-    except_features_no_outcomes = [0]
+    except_features_no_outcomes = [0, 1]
 
     final_cases = filter_cases(cases, except_features_no_outcomes)
     casebase_output = '{}_casebase.txt'.format(base_name)
@@ -82,8 +78,7 @@ def main():
 
     with open(outcomes_output, 'a') as file:
         for case in cases:
-            file.write('{}\n'.format('0' if case[outcome_row] == '-1' else '1'))
-
+            file.write('{}\n'.format('1' if case[outcome_row] == '2.000000' else '0'))
 
 
 if __name__ == '__main__':

@@ -82,7 +82,7 @@ def main():
 
     with open(outcomes_output, 'a') as file:
         for case in cases:
-            file.write('{}\n'.format('0' if case[outcome_row] == '-1' else '1'))
+            file.write('{}\n'.format('0' if case[outcome_row] == '0' else '1'))
 
 
 
