@@ -369,10 +369,10 @@ public:
         static bool calculated = false;
         if(!calculated)
         {
-            std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
+            //std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
             for(auto case_index = 0; case_index < std::size(cases); case_index++)
             {
-                std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
+                //std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
                 for (auto e = 0; e < std::size(intersection_family); e++)
                 {
                     //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
@@ -382,7 +382,7 @@ public:
             }
 
             for(auto e = 0; e < std::size(intersection_family); e++) {
-                std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                //std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
                 calculate_intrinsic_strength(0, e);
                 calculate_intrinsic_strength(1, e);
             }
@@ -637,7 +637,10 @@ public:
     std::map<int, std::map<int, double>> e_intrinsic_strength;          ///< Intrinsic strength of intersecting elements
     std::map<int, std::map<int, std::map<int, double>>> c_to_e_overlap; ///< Overlapping value between cases and intersecting elements
     std::vector<std::vector<int>> cases;                        ///< List of cases
-
+    std::vector<int> outcomes;                                  ///< List of outcomes
+    std::map<int, int> f_to_e;                                  ///< Mapping feature to intersecting elements
+    std::map<int, std::vector<int>> e_to_c;                     ///< Mapping intersecting elements to cases
+    std::map<int, std::vector<int>> c_to_e;                     ///< Mapping case to intersecting elements
 private:
 
     double _non_normalized_intrinsic_strength(int o, int ei) {
@@ -653,13 +656,13 @@ private:
     int m;                                                      ///< Number of unique features
     int max_k;                                                  ///< Maximal number of cases (used for pre-allocation)
     
-    std::vector<int> outcomes;                                  ///< List of outcomes
+    
     std::map<int, std::vector<int>> f_to_c;                     ///< Mapping feature to cases
-    std::map<int, int> f_to_e;                                  ///< Mapping feature to intersecting elements
+    
 
-    std::map<int, std::vector<int>> e_to_c;                     ///< Mapping intersecting elements to cases
+    
     std::map<int, std::map<int, std::vector<int>>> e_to_c_by_o; ///< Mapping intersecting elements to cases by outcome
-    std::map<int, std::vector<int>> c_to_e;                     ///< Mapping case to intersecting elements
+    
     std::map<int, std::vector<int>> e_to_outcome;               ///< Mapping intersecting elements to outcomes
     std::map<int, std::vector<int>> e_to_outcome_count;         ///< Mapping intersecting elements to the number of outcomes type
 };
