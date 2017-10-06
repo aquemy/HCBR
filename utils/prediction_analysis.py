@@ -33,6 +33,18 @@ def main():
     except:
         pass
 
+    try:
+        with open(diff_positive_pred_output, 'a') as f:
+            f.write('')
+        with open(diff_negative_pred_output, 'a') as f:
+            f.write('')
+        with open(diff_positive_bad_pred_output, 'a') as f:
+            f.write('')
+        with open(diff_negative_bad_pred_output, 'a') as f:
+            f.write('')
+    except:
+        pass
+
     for i, row in enumerate(content):
         diff = float(row[W1_ROW]) - float(row[W0_ROW])
         res = 1*diff*abs(float(row[REAL_ROW])-float(row[GUESS_ROW]))
@@ -54,6 +66,13 @@ def main():
     try:
         os.remove(abs_diff_pred_output)
         os.remove(abs_diff_bad_pred_output)
+    except:
+        pass
+    try:
+        with open(abs_diff_bad_pred_output, 'a') as f:
+            f.write('')
+        with open(abs_diff_pred_output, 'a') as f:
+            f.write('')
     except:
         pass
     for i, row in enumerate(content):
@@ -120,7 +139,7 @@ def generate_gnuplot(path):
         ]
 
     base_name = path
-    output_file = "{}_abs_diff_pred.gp".format(base_name)
+    output_file = "{}_diff_pred.gp".format(base_name)
     try:
         os.remove(output_file)
     except:

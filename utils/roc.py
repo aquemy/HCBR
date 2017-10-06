@@ -22,7 +22,7 @@ T = np.ndarray(shape=(n,1), dtype=float, order='F')
 for i in range(0, n):
 	e = data[i].split()
 	Y[i] = int(e[REAL_ROW])
-	T[i] = float(e[SCORE_1]) / (float(e[SCORE_1]) + float(e[SCORE_0]))
+	T[i] = float(e[SCORE_1]) / (float(e[SCORE_1]) + float(e[SCORE_0])) if (float(e[SCORE_1]) + float(e[SCORE_0])) > 0 else 0.
 
 thresholds = np.linspace(1,0,p +1)
 ROC = np.zeros((p+1,2))
@@ -59,4 +59,5 @@ for i in range(p):
 AUC *= 0.5
 
 plt.title('ROC curve, AUC = %.4f'%AUC)
-plt.show()
+plt.savefig('roc.png')
+#plt.show()

@@ -6,10 +6,10 @@ W0_ROW = 9# 6
 
 def main():
     path = sys.argv[1]
-    file_name = path.split('/')[-1].split('.')[0]
-    base_name = file_name.split('.')[0]
+    file_name = '.'.join(path.split('/')[-1].split('.')[:-1])
+    print(file_name)
 
-    generate_gnuplot(base_name)
+    generate_gnuplot(path)
 
 def generate_gnuplot(path):
 
@@ -37,10 +37,10 @@ def generate_gnuplot(path):
 
     terminals_types = ['png', 'svg']
 
-    time_input = '{}.txt'.format(path)
-    plots = ["plot 'full.txt' u 0:13 ls 2 pt 7 ps 0.1 axes x1y1 t 'Time per iteration',\
-        'full.txt' u 0:14 ls 3 w l axes x2y2 t 'Total time',\
-        f(x) ls 1 axes x1y1 t ti".format(),
+    time_input = path #'{}.txt'.format(path)
+    plots = ["plot '{p}' u 0:10 ls 2 pt 7 ps 0.3 axes x1y1 t 'Time per iteration',\
+        '{p}' u 0:11 ls 3 w l axes x2y2 t 'Total time'".format(p=path),
+        "plot '{p}' u 0:10 ls 2 pt 7 ps 0.1 w i t 'Time per iteration'".format(p=path)
         ]
 
     keys_and_ranges = ["set key top left\n\
@@ -48,10 +48,11 @@ def generate_gnuplot(path):
             set y2tics\n\
             set tics out\n\
             set autoscale  y\n\
-            set autoscale y2\n"
-        ]
+            set autoscale y2\n",
+            "set key top left"
+        ] 
 
-    base_name = path
+    base_name = '.'.join(path.split('.')[:-1])
     output_file = "{}_time.gp".format(base_name)
     try:
         os.remove(output_file)
@@ -60,9 +61,9 @@ def generate_gnuplot(path):
     with open(output_file, 'w') as f:
         f.write("#!/usr/bin/gnuplot5 \n\n")
         for i, plot in enumerate(plots):
-            f.write("f(x) = a*x\n")
-            f.write("fit f(x) '{}' u 0:13  via a\n".format(time_input))
-            f.write('ti = sprintf("%.3ex", a)\n')
+            #f.write("f(x) = a*x\n")
+            #f.write("fit f(x) '{}' u 0:13  via a\n".format(time_input))
+            #f.write('ti = sprintf("%.3ex", a)\n')
             for o in terminals_types:
                 f.write(gp_terminals(o, "{}_time_{}".format(base_name, i)) + '\n')
                 f.write(gp_headers + '\n')
