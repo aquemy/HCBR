@@ -10,12 +10,6 @@
 #include <io.cpp>
 #include <utils.cpp>
 
-auto log_file_name(std::string file, int id, std::string ext="csv") {
-    if(id < 0)
-        return file + ".global.log." + ext;
-    return file + ".run_" + std::to_string(id) + ".log." + ext;
-}
-
 int main(int argc, char** argv)
 {
     using std::cerr;
@@ -430,7 +424,7 @@ int main(int argc, char** argv)
 
     cerr << "# Calculate intrinsic strength..." << endl;
     start_time = std::chrono::steady_clock::now();
-    cb.calculate_strength();
+    cb.calculate_strength(log, run_id);
     end_time = std::chrono::steady_clock::now();
     diff = end_time - start_time;
     time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();

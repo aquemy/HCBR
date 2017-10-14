@@ -1,9 +1,17 @@
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <vector>
 #include <map>
 #include <set>
 #include <tuple>
+//#include <utils.cpp>
+
+auto log_file_name(std::string file, int id, std::string ext="csv") {
+    if(id < 0)
+        return file + ".global.log." + ext;
+    return file + ".run_" + std::to_string(id) + ".log." + ext;
+}
 
 
 ////////////////////////////////////////////////////////////
@@ -365,13 +373,17 @@ public:
         calculated = true;
     }
 
-    void calculate_strength() {
+    void calculate_strength(std::fstream& log, int run_id) {
         static bool calculated = false;
+        
         if(!calculated)
         {
             //std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
+            log.open(log_file_name("overlap", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
+            
             for(auto case_index = 0; case_index < std::size(cases); case_index++)
             {
+                auto start_time = std::chrono::steady_clock::now();
                 //std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
                 for (auto e = 0; e < std::size(intersection_family); e++)
                 {
@@ -379,13 +391,32 @@ public:
                     c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
                     c_to_e_overlap[1][case_index][e] = mu(1, e, case_index);
                 }
+                auto end_time = std::chrono::steady_clock::now();
+                auto diff = end_time - start_time;
+                auto time_total = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+                log << case_index << " , " 
+                    << std::size(cases) << " , " 
+                    << time_total //<< " , " 
+                    << std::endl;
             }
-
+            log.close();
+            log.open(log_file_name("strength", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
             for(auto e = 0; e < std::size(intersection_family); e++) {
                 //std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                auto start_time = std::chrono::steady_clock::now();
                 calculate_intrinsic_strength(0, e);
                 calculate_intrinsic_strength(1, e);
+                auto end_time = std::chrono::steady_clock::now();
+                auto diff = end_time - start_time;
+                auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+                log << e << " , " 
+                    << std::size(intersection_family) << " , " 
+                    << e_intrinsic_strength[0][e] << " , " 
+                    << e_intrinsic_strength[1][e] << " , " 
+                    << time
+                    << std::endl;
             }
+            log.close();
         }
         calculated = true;
     }

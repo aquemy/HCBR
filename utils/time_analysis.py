@@ -6,12 +6,14 @@ W0_ROW = 9# 6
 
 def main():
     path = sys.argv[1]
+    is_csv = True if path.endswith('.csv') else False
+    time_column = sys.argv[2]
     file_name = '.'.join(path.split('/')[-1].split('.')[:-1])
     print(file_name)
 
-    generate_gnuplot(path)
+    generate_gnuplot(path, time_column, is_csv)
 
-def generate_gnuplot(path):
+def generate_gnuplot(path, time_column, is_csv):
 
     gp_headers = "reset\n\
         \n\
@@ -24,7 +26,9 @@ def generate_gnuplot(path):
         set tics nomirror\n\
         set style line 12 lc rgb '#808080' lt 0 lw 1\n\
         set grid back ls 12\n\
-        set grid x y2\n"
+        set grid x y2\n\
+        a=0\n\
+        cumulative_sum(x)=(a=a+x,a)\n\n"
 
     def gp_terminals(t_type, name):
         if t_type == 'png':
@@ -38,9 +42,9 @@ def generate_gnuplot(path):
     terminals_types = ['png', 'svg']
 
     time_input = path #'{}.txt'.format(path)
-    plots = ["plot '{p}' u 0:10 ls 2 pt 7 ps 0.3 axes x1y1 t 'Time per iteration',\
-        '{p}' u 0:11 ls 3 w l axes x2y2 t 'Total time'".format(p=path),
-        "plot '{p}' u 0:10 ls 2 pt 7 ps 0.1 w i t 'Time per iteration'".format(p=path)
+    plots = ["plot '{p}' u 0:{c} ls 2 pt 7 ps 0.3 axes x1y1 t 'Time per iteration',\
+        '{p}' u 0:(cumulative_sum(${c})) ls 3 w l axes x2y2 t 'Total time'".format(p=path, c=time_column),
+        "plot '{p}' u 0:{c} ls 2 pt 7 ps 0.1 w i t 'Time per iteration'".format(p=path, c=time_column)
         ]
 
     keys_and_ranges = ["set key top left\n\
@@ -68,6 +72,8 @@ def generate_gnuplot(path):
                 f.write(gp_terminals(o, "{}_time_{}".format(base_name, i)) + '\n')
                 f.write(gp_headers + '\n')
                 f.write(keys_and_ranges[i] + '\n')
+                if is_csv:
+                    f.write("set datafile separator \",\"\n")
                 f.write(plot + '\n')
 
 if __name__ == '__main__':

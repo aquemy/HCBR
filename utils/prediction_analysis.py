@@ -14,8 +14,8 @@ W0_ROW = 6
 
 def main():
     path = sys.argv[1]
-    file_name = path.split('/')[-1].split('.')[0]
-    base_name = file_name.split('.')[0]
+    file_name = '.'.join(path.split('/')[-1].split('.')[:-1])
+    base_name = file_name
 
     with open(path) as f:
         content = f.readlines()

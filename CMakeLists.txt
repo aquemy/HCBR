@@ -47,7 +47,7 @@ set(FILES
     #src/utils.cpp
     )
 
-add_executable(hcbr src/sequence.cpp ${FILES})
+#add_executable(hcbr src/sequence.cpp ${FILES})
 add_executable(hcbr_learning src/learning_sequence.cpp ${FILES})
 
 ######################################################################################

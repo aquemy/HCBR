@@ -72,24 +72,26 @@ def tex_escape(text):
 
 def generate_latex(data, caption, label):
     card = str(int(data[38]))
-    acc = "{:.2f}".format(data[46])
+    acc = "{:.4f}".format(data[46])
     tp = "{:.2f}".format(data[47])
     fp = "{:.2f}".format(data[48])
     fn = "{:.2f}".format(data[49])
     tn = "{:.2f}".format(data[50])
-    prev = "{:.2f}".format((data[47] + data[49]) / int(data[38]))
-    tpr = "{:.2f}".format(data[51])
-    tnr = "{:.2f}".format(data[52])
-    ppv = "{:.2f}".format(data[53])
-    npv = "{:.2f}".format(data[54])
-    fnr = "{:.2f}".format(data[55])
-    fpr = "{:.2f}".format(data[56])
-    fdr = "{:.2f}".format(data[57])
-    forr = "{:.2f}".format(data[58])
-    f1 = "{:.2f}".format(data[59])
-    mcc = "{:.2f}".format(data[60])
+    prev = "{:.4f}".format((data[47] + data[49]) / int(data[38]))
+    tpr = "{:.4f}".format(data[51])
+    tnr = "{:.4f}".format(data[52])
+    ppv = "{:.4f}".format(data[53])
+    npv = "{:.4f}".format(data[54])
+    fnr = "{:.4f}".format(data[55])
+    fpr = "{:.4f}".format(data[56])
+    fdr = "{:.4f}".format(data[57])
+    forr = "{:.4f}".format(data[58])
+    f1 = "{:.4f}".format(data[59])
+    mcc = "{:.4f}".format(data[60])
     a = "{:.2f}".format(data[47] + data[49])
     b = "{:.2f}".format(data[48] + data[50])
+    c = "{:.2f}".format(data[47] + data[48])
+    d = "{:.2f}".format(data[49] + data[50])
 
     res = "\
     \renewcommand\arraystretch{1.5}\n\
@@ -102,27 +104,62 @@ def generate_latex(data, caption, label):
       \multirow{10}{*}{\rotatebox{90}{\parbox{3.1cm}{\bfseries\centering Predicted class}}} &\n\
         & \multicolumn{2}{c}{\bfseries Real class} & \\\n\
       & & \bfseries P & \bfseries N & \bfseries Total \\\n\
-      & \cmlegend{P} & \cmbox{" + tp + "} & \cmbox{" + fp + "} & \cmlegend{} \\\n\
-      & \cmlegend{N} & \cmbox{" + fn + "} & \cmbox{" + tn + "} & \cmlegend{} \\\n\
+      & \cmlegend{P} & \cmbox{" + tp + "} & \cmbox{" + fp + "} & \cmlegend{" + c + "} \\\n\
+      & \cmlegend{N} & \cmbox{" + fn + "} & \cmbox{" + tn + "} & \cmlegend{" + d + "} \\\n\
       & \cmlegend{Total} & \cmlegend{" + a + "} & \cmlegend{" + b + "} & \cmlegend{" + card + "}\n\
     \end{tabular}\n\
-    \begin{small}\n\
-    \hfill\n\
     \end{small}\n\
+    \hfill\n\
+    \begin{small}\n\
     \begin{tabular}{| @{\hspace{0.7em}}l  @{\hspace{0.7em}} l  @{\hspace{0.7em}}|}\n\
         \hline\n\
         Accuracy: &" + acc + "\\\n\
         Prevalence: & " + prev + "\\\n\
-        True positive rate: & " + b + "\\\n\
-        False positive rate: & " + b + "\\\n\
-        False negative rate: & " + b + "\\\n\
-        True negative rate: &" + b + " \\\n\
-        Positive predictive value: & " + b + " \\\n\
-        False discovery rate: & " + b + "\\\n\
-        False omission rate: & " + b + "\\\n\
-        Negative predictive value: & " + b + "\\\n\
-        F1 score: & " + b + "\\\n\
-        Matthews corr. coef.: & " + b + "\\\n\
+        True positive rate: & " + tpr + "\\\n\
+        True negative rate: &" + tnr + " \\\n\
+        Positive predictive value: & " + ppv + " \\\n\
+        Negative predictive value: & " + npv + "\\\n\
+        F1 score: & " +f1 + "\\\n\
+        Matthews corr. coef.: & " + mcc + "\\\n\
+        \hline\n\
+      \end{tabular}\n\
+    \end{small}\n\
+    \end{table}\n\
+    "
+
+
+    save = "\
+    \renewcommand\arraystretch{1.5}\n\
+    \setlength\tabcolsep{0pt}\n\
+    \begin{table}\n\
+    \caption{" + caption + "}\n\
+    \label{" + label + "}\n\
+     \begin{small}\n\
+    \begin{tabular}{c >{\bfseries}r @{\hspace{0.7em}}c @{\hspace{0.4em}}c @{\hspace{0.7em}}l}\n\
+      \multirow{10}{*}{\rotatebox{90}{\parbox{3.1cm}{\bfseries\centering Predicted class}}} &\n\
+        & \multicolumn{2}{c}{\bfseries Real class} & \\\n\
+      & & \bfseries P & \bfseries N & \bfseries Total \\\n\
+      & \cmlegend{P} & \cmbox{" + tp + "} & \cmbox{" + fp + "} & \cmlegend{" + c + "} \\\n\
+      & \cmlegend{N} & \cmbox{" + fn + "} & \cmbox{" + tn + "} & \cmlegend{" + d + "} \\\n\
+      & \cmlegend{Total} & \cmlegend{" + a + "} & \cmlegend{" + b + "} & \cmlegend{" + card + "}\n\
+    \end{tabular}\n\
+    \end{small}\n\
+    \hfill\n\
+    \begin{small}\n\
+    \begin{tabular}{| @{\hspace{0.7em}}l  @{\hspace{0.7em}} l  @{\hspace{0.7em}}|}\n\
+        \hline\n\
+        Accuracy: &" + acc + "\\\n\
+        Prevalence: & " + prev + "\\\n\
+        True positive rate: & " + tpr + "\\\n\
+        True negative rate: &" + tnr + " \\\n\
+        Positive predictive value: & " + ppv + " \\\n\
+        Negative predictive value: & " + npv + "\\\n\
+        False positive rate: & " + fpr + "\\\n\
+        False negative rate: & " + fnr + "\\\n\
+        False discovery rate: & " + fdr + "\\\n\
+        False omission rate: & " + forr + "\\\n\
+        F1 score: & " +f1 + "\\\n\
+        Matthews corr. coef.: & " + mcc + "\\\n\
         \hline\n\
       \end{tabular}\n\
     \end{small}\n\
@@ -232,6 +269,102 @@ def main():
         file.write(' , '.join(headers) + '\n')
         for k, l in enumerate(average_data):
             file.write(' , '.join(map(str, l)) + '\n')
+
+
+    '''
+    Calculate the average table for overlap
+    '''
+
+    data_run = []
+    headers, average_data = read_csv(os.path.join(folder, "run_{}".format(0), "overlap.run_{}.log.csv".format(0)))
+    for k, l in enumerate(average_data):
+        #print(l)
+        for j, _ in enumerate(l):
+            #print(average_data[k][j])
+            try:
+                average_data[k][j] = float(average_data[k][j])
+            except Exception as e:
+                pass
+                #print("{} {}".format(e, average_data[k][j]))
+
+    for i in range(1, nb_runs):
+        _, data_run =read_csv(os.path.join(folder, "run_{}".format(i), "overlap.run_{}.log.csv".format(i)))
+        for k, l in enumerate(data_run):
+            #print('LINE {}'.format(l))
+            for j, v in enumerate(l):
+                try:
+                    #print(type(v),v, float(v.strip()))
+                    average_data[k][j] += float(v.strip())
+                except Exception as e:
+                    pass
+                    #print(e)
+    for k, l in enumerate(average_data):
+        for j, _ in enumerate(l):
+            try:
+                average_data[k][j] /= float(nb_runs)
+            except Exception as e:
+                pass
+                #print(e)
+
+    average_output = os.path.join(folder, "overlap.average.log.csv")
+    try:
+        os.remove(average_output)
+    except:
+        pass
+        
+    with open(average_output, 'a') as file:
+        file.write(' , '.join(headers) + '\n')
+        for k, l in enumerate(average_data):
+            file.write(' , '.join(map(str, l)) + '\n')
+
+
+    '''
+    Calculate the average table for strength
+    '''
+
+    data_run = []
+    headers, average_data = read_csv(os.path.join(folder, "run_{}".format(0), "strength.run_{}.log.csv".format(0)))
+    for k, l in enumerate(average_data):
+        #print(l)
+        for j, _ in enumerate(l):
+            #print(average_data[k][j])
+            try:
+                average_data[k][j] = float(average_data[k][j])
+            except Exception as e:
+                pass
+                #print("{} {}".format(e, average_data[k][j]))
+
+    for i in range(1, nb_runs):
+        _, data_run =read_csv(os.path.join(folder, "run_{}".format(i), "strength.run_{}.log.csv".format(i)))
+        for k, l in enumerate(data_run):
+            #print('LINE {}'.format(l))
+            for j, v in enumerate(l):
+                try:
+                    #print(type(v),v, float(v.strip()))
+                    average_data[k][j] += float(v.strip())
+                except Exception as e:
+                    pass
+                    #print(e)
+    for k, l in enumerate(average_data):
+        for j, _ in enumerate(l):
+            try:
+                average_data[k][j] /= float(nb_runs)
+            except Exception as e:
+                pass
+                #print(e)
+
+    average_output = os.path.join(folder, "strength.average.log.csv")
+    try:
+        os.remove(average_output)
+    except:
+        pass
+        
+    with open(average_output, 'a') as file:
+        file.write(' , '.join(headers) + '\n')
+        for k, l in enumerate(average_data):
+            file.write(' , '.join(map(str, l)) + '\n')
+
+
 
     '''
     Calculate the average table for the raw standard output
