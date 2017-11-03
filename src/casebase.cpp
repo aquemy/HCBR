@@ -28,8 +28,9 @@ std::map<int, int> features_count(const std::vector<std::vector<int>>& cases) {
             if(feature_map.count(f) == 1) {
                 feature_map[f]++;
             } else {
-                feature_map[f] = 0;
+                feature_map[f] = 1;
             }
+
         }
     }
     return feature_map;
@@ -122,7 +123,7 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 ////////////////////////////////////////////////////////////
 int prediction_rule(auto pred, auto rdf, auto delta, auto eta, auto gen) {
     auto prediction = 0;
-    if(std::get<1>(pred) > std::get<0>(pred)) {
+    if( (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred)) > delta) {
         prediction = 1;
 
     }
@@ -379,17 +380,21 @@ public:
         if(!calculated)
         {
             //std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
-            log.open(log_file_name("overlap", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
-            
+            //log.open(log_file_name("overlap", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
             for(auto case_index = 0; case_index < std::size(cases); case_index++)
             {
                 auto start_time = std::chrono::steady_clock::now();
-                //std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
+                std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
                 for (auto e = 0; e < std::size(intersection_family); e++)
                 {
                     //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
-                    c_to_e_overlap[0][case_index][e] = mu(0, e, case_index);
-                    c_to_e_overlap[1][case_index][e] = mu(1, e, case_index);
+                    auto a = mu(0, e, case_index);
+                    auto b = mu(1, e, case_index);
+                    //if(a != 0 || b != 0) 
+                    {
+                        c_to_e_overlap[0][case_index][e] = a;
+                        c_to_e_overlap[1][case_index][e] = b;
+                    }
                 }
                 auto end_time = std::chrono::steady_clock::now();
                 auto diff = end_time - start_time;
@@ -402,7 +407,7 @@ public:
             log.close();
             log.open(log_file_name("strength", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
             for(auto e = 0; e < std::size(intersection_family); e++) {
-                //std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
                 auto start_time = std::chrono::steady_clock::now();
                 calculate_intrinsic_strength(0, e);
                 calculate_intrinsic_strength(1, e);

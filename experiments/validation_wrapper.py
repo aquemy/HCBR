@@ -12,19 +12,6 @@ DATA_FOLDER = '../data'
 KFOLD_SCRIPT = 'kfold_validation.py'
 ACCURACY_ROW = 4
 
-INSTANCES = [
-    #('adult', 1506844911), # 0.8217306
-    #('audiology', 1506863181), # 0.9886078
-    ('breast', 1506930659), # 0.9663081
-    #('breast_original', 1506901272), # 0.967647
-    #('heart', 1506861795), # 0.8570092
-    #('ionosphere', 1506867085), # 0.8453238
-    #('mushrooms', 1506776153), # 1.0 
-    #('phishing', 1506814280), # 0.9536304
-    #('skin', 1506824485), # 0.9831426
-    #('splice', 1506834690), # 0.9416073
-]
-
 def read_outcomes(path):
     cases = []
     headers = []
@@ -76,12 +63,17 @@ def main():
         data_location = os.path.join(DATA_FOLDER, "{}.txt".format(instance_name))
         cmd = "python {} {}".format(process_script, data_location)
         rc = subprocess.call(cmd, shell=True)
+        print('CMD: {}'.format(cmd))
         print('RC: {}'.format(rc))
         if rc:
             exit(1)
         path_casebase = os.path.join("{}_casebase.txt".format(instance_name))
         path_outcomes = os.path.join("{}_outcomes.txt".format(instance_name))
-        outcomes = read_outcomes(path_outcomes)
+        try:
+            outcomes = read_outcomes(path_outcomes)
+        except Exception as e:
+            print(e)
+            exit(1)
 
         n = len(outcomes)
 
@@ -106,6 +98,14 @@ def main():
         print('# Read configuration for this instance...')
         examples = int(round(n * l))
         parameters_path = os.path.join(DATA_FOLDER, "parameters", "{}.params.json".format(instance_name))
+        default_params = {
+                "learning_phases": 1,
+                "eta": 0.0,
+                "delta": 0.0,
+                "gamma": 0.0,
+                "heuristic": 1,
+                "online": 1
+            }
         parameters = None
         try:
             with open(parameters_path) as json_data:
@@ -114,15 +114,13 @@ def main():
             print('[ERROR] Could not retrieve parameters. Use default parameters.')
             print(e)
         if parameters is None:
-            parameters = {
-                "learning_phases": 1,
-                "eta": 0.0,
-                "delta": 0.0,
-                "heuristic": 1,
-                "online": 1
-            }
+            parameters = default_params
+        else:
+            for key, v in default_params.iteritems():
+                if key not in parameters:
+                    print('# - Add {}={} as parameter because value not found'.format(key, v))
+                    parameters[key] = v
         print('# Configuration: {}'.format(parameters))
-
         # Start validation runs
         print('# Start validation runs...')
         average_accuracy = 0
@@ -143,7 +141,7 @@ def main():
                     continue
             fold_casebase = os.path.join("../experiments", base_output_path, "input_data", "{}_casebase.fold_{}.txt".format(instance_name, i))
             fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data", "{}_outcomes.fold_{}.txt".format(instance_name, i))
-            cmd = "{} -c {} -o {} -l {} -s -v -p {} -e {} -d {} {} {} -b {} > {} 2> {}".format(
+            cmd = "{} -c {} -o {} -l {} -s -p {} -e {} -d {} -g {} {} {} -b {} > {} 2> {}".format(
                     executable_path,
                     fold_casebase,
                     fold_outcomes,
@@ -151,6 +149,7 @@ def main():
                     parameters['learning_phases'],
                     parameters['eta'],
                     parameters['delta'],
+                    parameters['gamma'],
                     '-i' if parameters['online'] == 1 else "",
                     '-z' if parameters['heuristic'] == 1 else "",
                     i,

@@ -23,6 +23,7 @@ int main(int argc, char** argv)
 
     TCLAP::ValueArg<double> etaArg("e","eta", "Hyperparameter to add an offset to the default class for prediction", false, 0.,"double", cmd);
     TCLAP::ValueArg<double> deltaArg("d","delta", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
+    TCLAP::ValueArg<double> gammaArg("g","gamma", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
 
     TCLAP::ValueArg<string> cbFileArg("c", "casebase","File with the casebase description", true, "", "string", cmd);
     TCLAP::ValueArg<string> oFileArg("o", "outcomes","File with the outomes corresponding to the casebase", true, "", "string", cmd);
@@ -32,7 +33,7 @@ int main(int argc, char** argv)
     TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
     TCLAP::ValueArg<int> nArg("n","starting-number", "Starting case number", false, 0, "int", cmd);
     TCLAP::SwitchArg rArg("r","shuffle","Shuffle the casebase (testing purposes)", cmd, false);
-    TCLAP::SwitchArg vArg("v","log","Log the final casebase", cmd, true);
+    TCLAP::SwitchArg vArg("v","log","Log the final casebase", cmd, false);
     TCLAP::SwitchArg iArg("i","online","Online algorithm (strength calculated incrementally or at once after insertion)", cmd, false);
     TCLAP::ValueArg<int> pArg("p","phases","Number of learning phases", false, -1, "int", cmd);
     TCLAP::ValueArg<int> runArg("b","run-number","ID to identify a run (used for log files name)", false, 0, "int", cmd);
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
     // 1. DATA
     // 1.1 CMD verification
     const auto delta = deltaArg.getValue();
+    const auto gamma = gammaArg.getValue();
     //if(delta < -1 || delta > 1)
     //    throw std::domain_error("Delta must belong to [-1,1]");
 
@@ -486,8 +488,8 @@ int main(int argc, char** argv)
                 pred_0 += r * cb.e_intrinsic_strength[0][k.first];
                 pred_1 += r * cb.e_intrinsic_strength[1][k.first];
             }
-            pred = normalize_prediction(pred_0, pred_1, 0, 0, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
-            prediction = prediction_rule(pred, rdf, delta, eta, gen);
+            pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
+            prediction = prediction_rule(pred, rdf, gamma, eta, gen);
 
             avr_good += 1 - abs(o - prediction);
             if(prediction == 1)
@@ -674,7 +676,7 @@ int main(int argc, char** argv)
         }
         pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
 
-        prediction = prediction_rule(pred, rdf, delta, eta, gen);
+        prediction = prediction_rule(pred, rdf, gamma, eta, gen);
 
         if (check_if_in_cb) {
             auto index_case = std::find(begin(cb.cases), end(cb.cases), nc);
