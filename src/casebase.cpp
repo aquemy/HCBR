@@ -390,7 +390,7 @@ public:
                     //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
                     auto a = mu(0, e, case_index);
                     auto b = mu(1, e, case_index);
-                    //if(a != 0 || b != 0) 
+                    if(a != 0 || b != 0) 
                     {
                         c_to_e_overlap[0][case_index][e] = a;
                         c_to_e_overlap[1][case_index][e] = b;
