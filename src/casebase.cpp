@@ -76,13 +76,11 @@ auto random_prediction(auto gen) {
 std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta, double delta, double avg_0, double avg_1) {
     double a = pred_0;
     double b = pred_1;
-    return std::tuple<double, double>(pred_0, pred_1);
-    /*
-    if (a + delta + b  + eta + delta > 0) {
+    if (a + delta + b  + eta > 0) {
         pred_0 = (a + eta) / (a + b  + eta + delta);
         pred_1 = (b + delta) / (a + b + eta + delta);
-    }*/
-
+    }
+    /*
     if (a + b > 0 || eta > 0) {
         pred_0 = (a + eta + avg_0) / (a  + b + eta + avg_0 + avg_1);
         pred_1 = (b + avg_1) / (a + b + eta + avg_0 + avg_1);
@@ -101,13 +99,13 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
             pred_1 =pred_0;
             pred_0 = t;
         }
-        //*/
+        //
     }
     else {
         pred_0 = 0;
         pred_1 = 0;
     }
-
+    //*/
     return std::tuple<double, double>(pred_0, pred_1);
 }
 
@@ -379,8 +377,8 @@ public:
         
         if(!calculated)
         {
-            //std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
-            //log.open(log_file_name("overlap", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
+            std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
+            log.open(log_file_name("overlap", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
             for(auto case_index = 0; case_index < std::size(cases); case_index++)
             {
                 auto start_time = std::chrono::steady_clock::now();
