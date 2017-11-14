@@ -755,6 +755,7 @@ int main(int argc, char** argv)
                  << pred_0 + rdf + eta << " " 
                  << iteration_time << " " 
                  << total_time << " " 
+                 << std::setprecision(15)
                  << std::get<1>(pred) - std::get<0>(pred) << " "
                  << avg_diff_bad_1 / (j+1) << " "
                  << avg_diff_bad_0 / (j+1) << " "
