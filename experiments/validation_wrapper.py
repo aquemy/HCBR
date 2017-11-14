@@ -89,6 +89,7 @@ def main():
             seed if seed is not None else "",
             fold_creation_output
             )
+        print('CMD: {}'.format(cmd_fold_validation))
         rc = subprocess.call(cmd_fold_validation, shell=True)
         print('RC: {}'.format(rc))
         if rc:
@@ -219,8 +220,8 @@ def main():
                 path=os.path.join(os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)))
             )
             cmd_time_gp = "gnuplot {}".format(os.path.join(base_output_path, "run_{}".format(i), 'output_{}_time.gp'.format(run_nb)).format(run_nb))
-            rc = subprocess.call(cmd_time, shell=True)
-            rc = subprocess.call(cmd_time_gp, shell=True)
+            #rc = subprocess.call(cmd_time, shell=True)
+            #rc = subprocess.call(cmd_time_gp, shell=True)
         except Exception as e:
             print(e)
 
@@ -308,8 +309,8 @@ def main():
             column=1
         )
         cmd_time_gp = "gnuplot {}".format(os.path.join(base_output_path, 'training.average.log_time.gp'))
-        rc = subprocess.call(cmd_time, shell=True)
-        rc = subprocess.call(cmd_time_gp, shell=True)
+        #rc = subprocess.call(cmd_time, shell=True)
+        #rc = subprocess.call(cmd_time_gp, shell=True)
 
     except Exception as e:
         print(e)
