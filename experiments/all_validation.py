@@ -10,7 +10,7 @@ ONLY_ANALYSIS = False
 Instances and seeds used for the article 'Binary Classification On Hypergraphs'
 '''
 INSTANCES = [
-    #('adult', 1509029032), #    0.8206451 1506844911), # 0.8217306
+    ('adult', 1509029032), #    0.8206451 1506844911), # 0.8217306
     #('audiology', 1509000373), #OK 0.9947368 1506863181), # 0.9886078
     #('breast', 1509009986), # OK 0.9695652 1506930659), # 0.9663081
     #('breast_original', 1506901272), # 0.967647
@@ -22,13 +22,23 @@ INSTANCES = [
     #('splice', 1509028798), # OK    0.9443038 # 1506834690), # 0.9416073
 ]
 
-INSTANCES = [
-    #('echr_procedure_3', None),
-    #('echr_relevantLaw_3', None),
-    ('echr_law_3', None),
-    #('echr_circumstances_3', None),
-    #('echr_full_3', None),
 
+INSTANCES = [
+    ('echr_circumstances_6', None),
+    ('echr_circumstances_8', None),
+    ('echr_circumstances_3', None),
+    ('echr_full_6', None),
+    ('echr_full_8', None),
+    ('echr_full_3', None),
+    ('echr_law_6', None),
+    ('echr_law_8', None),
+    ('echr_law_3', None),
+    ('echr_procedure_3', None),
+    ('echr_procedure_6', None),
+    ('echr_procedure_8', None),
+    ('echr_relevantLaw_6', None),
+    ('echr_relevantLaw_8', None),
+    ('echr_relevantLaw_3', None)
 ]
 
 
