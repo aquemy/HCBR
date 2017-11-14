@@ -383,7 +383,7 @@ public:
             {
                 auto start_time = std::chrono::steady_clock::now();
                 std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
-                for (auto e = 0; e < std::size(intersection_family); e++)
+                for (auto e: c_to_e[case_index])// = 0; e < std::size(intersection_family); e++)
                 {
                     //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
                     auto a = mu(0, e, case_index);
