@@ -50,10 +50,21 @@ def read_cases(path):
         reader = csvfile.readlines()
         n = len(reader[0].split(' '))
         for i, row in enumerate(reader):
-            cases.append(row.split(' '))
+            r = map(str.strip, row.strip().split(' '))
+            t = []
+            for i, e in enumerate(r):
+                if i == 0:
+                    t.append(e)
+                else:
+                    #print(e.split(':'))
+                    v = '{}:{}'.format(e.split(':')[0], reduce_precision(e.split(':')[1], 2))
+                    t.append(v)
+            cases.append(t)
 
     return cases
 
+def reduce_precision(f, prec=2):
+    return '{:.2}'.format(round(float(f), prec))
 
 def main():
     path = sys.argv[1]
