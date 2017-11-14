@@ -405,6 +405,10 @@ public:
             log.close();
             log.open(log_file_name("strength", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
             for(auto e = 0; e < std::size(intersection_family); e++) {
+                calculate_non_normalized_intrinsic_strength(0, e);
+                calculate_non_normalized_intrinsic_strength(1, e);
+            }
+            for(auto e = 0; e < std::size(intersection_family); e++) {
                 std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
                 auto start_time = std::chrono::steady_clock::now();
                 calculate_intrinsic_strength(0, e);
@@ -494,9 +498,9 @@ public:
 
     void calculate_intrinsic_strength(int o, int ei) {
         auto all_strength = double{0.};
-        auto ei_strength = _non_normalized_intrinsic_strength(o, ei);
+        auto ei_strength = non_normalized_e_intrinsic_strength[o][ei];
         for(int i=0; i < std::size(intersection_family); ++i) {
-            all_strength += _non_normalized_intrinsic_strength(o, i);
+            all_strength += non_normalized_e_intrinsic_strength[o][ei];
         }
         if(all_strength > 0) {
             all_strength = ei_strength / all_strength;
@@ -675,6 +679,7 @@ public:
     std::map<int, int> f_to_e;                                  ///< Mapping feature to intersecting elements
     std::map<int, std::vector<int>> e_to_c;                     ///< Mapping intersecting elements to cases
     std::map<int, std::vector<int>> c_to_e;                     ///< Mapping case to intersecting elements
+    std::map<int, std::map<int, double>> non_normalized_e_intrinsic_strength;
 private:
 
     double _non_normalized_intrinsic_strength(int o, int ei) {
@@ -685,6 +690,16 @@ private:
             top += c_to_e_overlap[o][c][ei];
         }
         return top * res;
+    }
+
+    double calculate_non_normalized_intrinsic_strength(int o, int ei) {
+        auto ca = e_to_c_by_o[ei][o];
+        auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
+        auto top = double{0.};
+        for(auto c: ca) {
+            top += c_to_e_overlap[o][c][ei];
+        }
+        non_normalized_e_intrinsic_strength[o][ei] = top * res;
     }
 
     int m;                                                      ///< Number of unique features
