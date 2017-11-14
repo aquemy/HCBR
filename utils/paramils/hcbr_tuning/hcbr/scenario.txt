@@ -1,0 +1,12 @@
+algo = ../hcbr_wrapper.sh
+execdir = hcbr_tuning/hcbr
+deterministic = 0
+run_obj = qual
+overall_obj = mean
+cutoff_time = max
+cutoff_length = max
+tunerTimeout = 600
+paramfile = hcbr_tuning/hcbr/hcbr-params.txt
+outdir = hcbr_tuning/results/hcbr/paramils
+instance_file = hcbr_tuning/hcbr-inst.txt
+test_instance_file = hcbr_tuning/hcbr-inst.txt
