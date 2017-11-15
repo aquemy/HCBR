@@ -383,7 +383,8 @@ public:
             {
                 auto start_time = std::chrono::steady_clock::now();
                 std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
-                for (auto e: c_to_e[case_index])// = 0; e < std::size(intersection_family); e++)
+                //for (auto e = 0; e < std::size(intersection_family); e++)
+                for(auto e: c_to_e[case_index])
                 {
                     //std::cerr << "Overlap: E " << e << " / " << std::size(intersection_family) << std::endl;
                     auto a = mu(0, e, case_index);
@@ -500,7 +501,7 @@ public:
         auto all_strength = double{0.};
         auto ei_strength = non_normalized_e_intrinsic_strength[o][ei];
         for(int i=0; i < std::size(intersection_family); ++i) {
-            all_strength += non_normalized_e_intrinsic_strength[o][ei];
+            all_strength += non_normalized_e_intrinsic_strength[o][i];
         }
         if(all_strength > 0) {
             all_strength = ei_strength / all_strength;
@@ -681,16 +682,6 @@ public:
     std::map<int, std::vector<int>> c_to_e;                     ///< Mapping case to intersecting elements
     std::map<int, std::map<int, double>> non_normalized_e_intrinsic_strength;
 private:
-
-    double _non_normalized_intrinsic_strength(int o, int ei) {
-        auto ca = e_to_c_by_o[ei][o];
-        auto res = double(std::size(intersection_family[ei])) / std::size(f_to_e);
-        auto top = double{0.};
-        for(auto c: ca) {
-            top += c_to_e_overlap[o][c][ei];
-        }
-        return top * res;
-    }
 
     double calculate_non_normalized_intrinsic_strength(int o, int ei) {
         auto ca = e_to_c_by_o[ei][o];
