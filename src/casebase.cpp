@@ -382,7 +382,7 @@ public:
             for(auto case_index = 0; case_index < std::size(cases); case_index++)
             {
                 auto start_time = std::chrono::steady_clock::now();
-                std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
+                //std::cerr << "Overlap: Case " << case_index << " / " << std::size(cases) << std::endl;
                 //for (auto e = 0; e < std::size(intersection_family); e++)
                 for(auto e: c_to_e[case_index])
                 {
@@ -410,7 +410,7 @@ public:
                 calculate_non_normalized_intrinsic_strength(1, e);
             }
             for(auto e = 0; e < std::size(intersection_family); e++) {
-                std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
+                //std::cerr << "Strength: E " << e << " / " << std::size(intersection_family) << std::endl;
                 auto start_time = std::chrono::steady_clock::now();
                 calculate_intrinsic_strength(0, e);
                 calculate_intrinsic_strength(1, e);

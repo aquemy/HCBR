@@ -39,6 +39,7 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<int> runArg("b","run-number","ID to identify a run (used for log files name)", false, 0, "int", cmd);
     TCLAP::SwitchArg hArg("z","heuristic","Check if a case is already in a case-bas to reuse its results", cmd, false);
     TCLAP::ValueArg<int> seedArg("x","seed","Seed for the pseudo-random generator", false, 0, "int", cmd);
+    TCLAP::SwitchArg predArg("w","no-prediction","Deactivate the prediction (use for nested crossvalidation)", cmd, false);
 
     cmd.parse(argc, argv);
     std::fstream log;
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
     const auto casebase_file = cbFileArg.getValue();
     const auto outcomes_file = oFileArg.getValue();
     const auto features_file = fFileArg.getValue();
+
 
     auto cases = vector<vector<int>>();
     auto outcomes = vector<bool>();
@@ -84,6 +86,7 @@ int main(int argc, char** argv)
     auto limit_examples = lArg.getValue() + starting_case;
     auto run_id = runArg.getValue();
     auto check_if_in_cb = hArg.getValue();
+    auto no_pred = predArg.getValue();
     if(limit_examples > size(cases)) {
         cout << "# The limit is larger than the cases in the casebase. It will be set to the casebase size." << endl;
         limit_examples = size(cases);
@@ -237,7 +240,8 @@ int main(int argc, char** argv)
                  Avg. Diff. True Pos. (%), \
                  Avg. Diff. True Neg. (%), \
                  Avg. Diff. False Pos. (%), \
-                 Avg. Diff. False Neg. (%)";
+                 Avg. Diff. False Neg. (%), \
+                 MCC\n";
         log.open(log_file_name("training", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
         log << log_training << endl;
         log.close();
@@ -595,6 +599,7 @@ int main(int argc, char** argv)
             << std::to_string(100 * avg_diff_good_0_pct / tn) << " , "
             << std::to_string(100 * avg_diff_bad_1_pct / fp) << " , "
             << std::to_string(100 * avg_diff_bad_0_pct / fn) << " , "
+            << std::to_string(((long long int)(tp * tn) - (fp * fn)) / sqrt((long long int)(tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)))  + " , "
             << std::endl;
     }
     log.close();
@@ -636,204 +641,211 @@ int main(int argc, char** argv)
     min_dfr_pct = 1.;
     max_dfr_pct = 0.;
     avg_dfr_pct = 0.;
-    cerr << "# Predictions" << endl;
-    log.open(log_file_name("prediction", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
-    start_time = std::chrono::steady_clock::now();
-    for(auto i = limit_examples+1; i < n_cases; ++i) {
-        log_prediction = "";
-        auto start_iteration = std::chrono::steady_clock::now();
-        o = outcomes[indexes[i]];
-        nc = cases[indexes[i]];
+    if(!no_pred) {
+        cerr << "# Predictions" << endl;
+        log.open(log_file_name("prediction", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
+        start_time = std::chrono::steady_clock::now();
+        for(auto i = limit_examples+1; i < n_cases; ++i) {
+            log_prediction = "";
+            auto start_iteration = std::chrono::steady_clock::now();
+            o = outcomes[indexes[i]];
+            nc = cases[indexes[i]];
 
-        proj = cb.projection(nc);
-        auto m = std::size(proj.second);
-        rdf =  m / double(std::size(nc));
-        if(min_dfr_pct > rdf)
-            min_dfr_pct = rdf;
-        if(max_dfr_pct < rdf)
-            max_dfr_pct = rdf;
-        avg_dfr_pct += rdf;
+            proj = cb.projection(nc);
+            auto m = std::size(proj.second);
+            rdf =  m / double(std::size(nc));
+            if(min_dfr_pct > rdf)
+                min_dfr_pct = rdf;
+            if(max_dfr_pct < rdf)
+                max_dfr_pct = rdf;
+            avg_dfr_pct += rdf;
 
-        if(min_dfr > m)
-            min_dfr = m;
-        if(max_dfr < m)
-            max_dfr = m;
-        avg_dfr += m;
-        
-        decltype(nc) v(size(nc)+size(proj.second));
-        decltype(v)::iterator it;
-        it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
-        v.resize(it-begin(v));
-
-        auto non_disc_features = int(size(v));
-        pred_0 = 0.;
-        pred_1 = 0.;
-        for(const auto& k: proj.first) {
-            r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-            pred_0 += r * cb.e_intrinsic_strength[0][k.first];
-            pred_1 += r * cb.e_intrinsic_strength[1][k.first];
-           
-        }
-        pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
-
-        prediction = prediction_rule(pred, rdf, gamma, eta, gen);
-
-        if (check_if_in_cb) {
-            auto index_case = std::find(begin(cb.cases), end(cb.cases), nc);
+            if(min_dfr > m)
+                min_dfr = m;
+            if(max_dfr < m)
+                max_dfr = m;
+            avg_dfr += m;
             
-            if(index_case != end(cb.cases)) {
-                already_in_cb++;
-                auto index = std::distance(begin(cb.cases), index_case);
-                if(cb.outcomes[index] == o){
-                    already_in_cb_good++;
-                }
-                //cerr << "Already in case base " << cb.outcomes[index] << " " << o << endl;
-                prediction = cb.outcomes[index];
-            }
-        }
-        avr_good += 1 - abs(o - prediction);
-        if(prediction == 1)
-            if(o - prediction != 0) {
-                fp += 1;
-                avg_diff_bad_1 += std::get<1>(pred) - std::get<0>(pred);
-                avg_diff_bad_1_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
-            }
-            else {
-                tp += 1;
-                avg_diff_good_1 += std::get<1>(pred) - std::get<0>(pred);
-                avg_diff_good_1_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
-            }
-        if(prediction == 0)
-            if (o - prediction != 0) {
-                fn += 1;
-                avg_diff_bad_0 += std::get<1>(pred) - std::get<0>(pred);
-                avg_diff_bad_0_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
-            }
-            else {
-                tn += 1;
-                avg_diff_good_0 += std::get<1>(pred) - std::get<0>(pred);
-                avg_diff_good_0_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
-            }
+            decltype(nc) v(size(nc)+size(proj.second));
+            decltype(v)::iterator it;
+            it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
+            v.resize(it-begin(v));
 
-        ///*
-        if (online) {
-          if(abs(o - prediction) != 0) {
-              for(const auto& k: proj.first) {
-                  if(prediction == 1) {
-                      r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                      cb.e_intrinsic_strength[0][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                      cb.e_intrinsic_strength[1][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                  } else {
-                      r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                      cb.e_intrinsic_strength[0][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                      cb.e_intrinsic_strength[1][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+            auto non_disc_features = int(size(v));
+            pred_0 = 0.;
+            pred_1 = 0.;
+            for(const auto& k: proj.first) {
+                r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                pred_0 += r * cb.e_intrinsic_strength[0][k.first];
+                pred_1 += r * cb.e_intrinsic_strength[1][k.first];
+               
+            }
+            pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
+
+            prediction = prediction_rule(pred, rdf, gamma, eta, gen);
+
+            if (check_if_in_cb) {
+                auto index_case = std::find(begin(cb.cases), end(cb.cases), nc);
+                
+                if(index_case != end(cb.cases)) {
+                    already_in_cb++;
+                    auto index = std::distance(begin(cb.cases), index_case);
+                    if(cb.outcomes[index] == o){
+                        already_in_cb_good++;
+                    }
+                    //cerr << "Already in case base " << cb.outcomes[index] << " " << o << endl;
+                    prediction = cb.outcomes[index];
+                }
+            }
+            avr_good += 1 - abs(o - prediction);
+            if(prediction == 1)
+                if(o - prediction != 0) {
+                    fp += 1;
+                    avg_diff_bad_1 += std::get<1>(pred) - std::get<0>(pred);
+                    avg_diff_bad_1_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
+                }
+                else {
+                    tp += 1;
+                    avg_diff_good_1 += std::get<1>(pred) - std::get<0>(pred);
+                    avg_diff_good_1_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
+                }
+            if(prediction == 0)
+                if (o - prediction != 0) {
+                    fn += 1;
+                    avg_diff_bad_0 += std::get<1>(pred) - std::get<0>(pred);
+                    avg_diff_bad_0_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
+                }
+                else {
+                    tn += 1;
+                    avg_diff_good_0 += std::get<1>(pred) - std::get<0>(pred);
+                    avg_diff_good_0_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
+                }
+
+            ///*
+            if (online) {
+              if(abs(o - prediction) != 0) {
+                  for(const auto& k: proj.first) {
+                      if(prediction == 1) {
+                          r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                          cb.e_intrinsic_strength[0][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                          cb.e_intrinsic_strength[1][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                      } else {
+                          r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                          cb.e_intrinsic_strength[0][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                          cb.e_intrinsic_strength[1][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]) / size(proj.first);//abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                      }
                   }
               }
-          }
-        }
-        //*/
-       
-        //cb.display();
-        auto end_iteration = std::chrono::steady_clock::now();
-        auto diff = end_iteration - start_iteration;
-        auto iteration_time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-        total_time += iteration_time;
-        accuracy = avr_good / (j+1);
-        if(!sample_out || i > limit_examples) {
-            auto c = j;
-            if(keep_offset) {
-                c = i;
             }
-            cout << std::fixed << c << " " 
-                 << o << " " 
-                 << prediction << " " 
-                 << avr_good << " " 
-                 << accuracy << " " 
-                 << std::get<1>(pred) << " " 
-                 << std::get<0>(pred) << " "
-                 << rdf << " " 
-                 << pred_0 + rdf + eta << " " 
-                 << iteration_time << " " 
-                 << total_time << " " 
-                 << std::setprecision(15)
-                 << std::get<1>(pred) - std::get<0>(pred) << " "
-                 << avg_diff_bad_1 / (j+1) << " "
-                 << avg_diff_bad_0 / (j+1) << " "
-                 << min_toward_1 << " "
-                 << min_toward_0 << " "
-                 << endl;
-            ++j;
-            log << iteration_time << " , " 
-                << total_time << " , " 
-                << std::size(nc) << " , " 
-                << o << " , " 
-                << prediction << " , " 
-                << avr_good << " , " 
-                << accuracy << " , " 
-                << std::get<1>(pred) << " , " 
-                << std::get<0>(pred) << " , "
-                << std::size(proj.first) << " , "
-                << std::size(proj.second) << " , "
-                << rdf << " , " 
-                << std::to_string(tp) << " , "
-                << std::to_string(fp) << " , "
-                << std::to_string(fn) << " , "
-                << std::to_string(tn) << " , "
-                << std::to_string(avg_diff_good_1 / tp) << " , "
-                << std::to_string(avg_diff_good_0 / tn) << " , "
-                << std::to_string(avg_diff_bad_1 / fp) << " , "
-                << std::to_string(avg_diff_bad_0 / fn) << " , "
-                << std::to_string(100 * avg_diff_good_1_pct / tp) << " , "
-                << std::to_string(100 * avg_diff_good_0_pct / tn) << " , "
-                << std::to_string(100 * avg_diff_bad_1_pct / fp) << " , "
-                << std::to_string(100 * avg_diff_bad_0_pct / fn) << " , "
-                << endl;
+            //*/
+           
+            //cb.display();
+            auto end_iteration = std::chrono::steady_clock::now();
+            auto diff = end_iteration - start_iteration;
+            auto iteration_time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+            total_time += iteration_time;
+            accuracy = avr_good / (j+1);
+            if(!sample_out || i > limit_examples) {
+                auto c = j;
+                if(keep_offset) {
+                    c = i;
+                }
+                cout << std::fixed << c << " " 
+                     << o << " " 
+                     << prediction << " " 
+                     << avr_good << " " 
+                     << accuracy << " " 
+                     << std::get<1>(pred) << " " 
+                     << std::get<0>(pred) << " "
+                     << rdf << " " 
+                     << pred_0 + rdf + eta << " " 
+                     << iteration_time << " " 
+                     << total_time << " " 
+                     << std::setprecision(15)
+                     << std::get<1>(pred) - std::get<0>(pred) << " "
+                     << avg_diff_bad_1 / (j+1) << " "
+                     << avg_diff_bad_0 / (j+1) << " "
+                     << min_toward_1 << " "
+                     << min_toward_0 << " "
+                     << endl;
+                ++j;
+                log << iteration_time << " , " 
+                    << total_time << " , " 
+                    << std::size(nc) << " , " 
+                    << o << " , " 
+                    << prediction << " , " 
+                    << avr_good << " , " 
+                    << accuracy << " , " 
+                    << std::get<1>(pred) << " , " 
+                    << std::get<0>(pred) << " , "
+                    << std::size(proj.first) << " , "
+                    << std::size(proj.second) << " , "
+                    << rdf << " , " 
+                    << std::to_string(tp) << " , "
+                    << std::to_string(fp) << " , "
+                    << std::to_string(fn) << " , "
+                    << std::to_string(tn) << " , "
+                    << std::to_string(avg_diff_good_1 / tp) << " , "
+                    << std::to_string(avg_diff_good_0 / tn) << " , "
+                    << std::to_string(avg_diff_bad_1 / fp) << " , "
+                    << std::to_string(avg_diff_bad_0 / fn) << " , "
+                    << std::to_string(100 * avg_diff_good_1_pct / tp) << " , "
+                    << std::to_string(100 * avg_diff_good_0_pct / tn) << " , "
+                    << std::to_string(100 * avg_diff_bad_1_pct / fp) << " , "
+                    << std::to_string(100 * avg_diff_bad_0_pct / fn) << " , "
+                    << endl;
+            }
         }
-    }
-    log.close();
-    std::cerr << "# Already in case-base: " << already_in_cb << " " << already_in_cb_good / double(already_in_cb) << std::endl;
-    end_time = std::chrono::steady_clock::now();
-    diff = end_time - start_time;
-    time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-    log_run += std::to_string(time) + " , " + std::to_string(n_cases - limit_examples + 1) + " , ";
+        log.close();
+        std::cerr << "# Already in case-base: " << already_in_cb << " " << already_in_cb_good / double(already_in_cb) << std::endl;
+        end_time = std::chrono::steady_clock::now();
+        diff = end_time - start_time;
+        time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+        log_run += std::to_string(time) + " , " + std::to_string(n_cases - limit_examples + 1) + " , ";
 
+        diff = end_time - start_global_time;
+        time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+        log_run += std::to_string(time) + " , "
+                  + std::to_string(min_dfr) + " , "
+                  + std::to_string(max_dfr) + " , "
+                  + std::to_string(avg_dfr / (limit_examples - starting_case)) + " , "
+                  + std::to_string(100 * min_dfr_pct) + " , "
+                  + std::to_string(100 * max_dfr_pct) + " , "
+                  + std::to_string(100 * avg_dfr_pct / (limit_examples - starting_case)) + " , " 
+                  + std::to_string(accuracy) + " , "
+                  + std::to_string(tp) + " , "
+                  + std::to_string(fp) + " , "
+                  + std::to_string(fn) + " , "
+                  + std::to_string(tn) + " , "
+                  + std::to_string(tp / double(tp + fn))  + " , "
+                  + std::to_string(tn / double(tn + fp))  + " , "
+                  + std::to_string(tp / double(tp + fp))  + " , "
+                  + std::to_string(tn / double(tn + fn))  + " , "
+                  + std::to_string(fn / double(fn + tp))  + " , "
+                  + std::to_string(fp / double(fp + tn))  + " , "
+                  + std::to_string(fp / double(fp + tp))  + " , "
+                  + std::to_string(fn / double(fn + tn))  + " , "
+                  + std::to_string(2*tp / double(2*tp + fp + fn))  + " , "
+                  + std::to_string(((long long int)(tp * tn) - (fp * fn)) / sqrt((long long int)(tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)))  + " , "
+                  + std::to_string(avg_diff_good_1 / tp) + " , "
+                  + std::to_string(avg_diff_good_0 / tn) + " , "
+                  + std::to_string(avg_diff_bad_1 / fp) + " , "
+                  + std::to_string(avg_diff_bad_0 / fn) + " , "
+                  + std::to_string(100 * avg_diff_good_1_pct / tp) + " , "
+                  + std::to_string(100 * avg_diff_good_0_pct / tn) + " , "
+                  + std::to_string(100 * avg_diff_bad_1_pct / fp) + " , "
+                  + std::to_string(100 * avg_diff_bad_0_pct / fn) + " , "
+                  + std::to_string(already_in_cb_good / double(already_in_cb)) + " , ";
+        cerr << ((long long int)(tp * tn) - (fp * fn)) / sqrt((long long int)(tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)) << endl;
+        log.open(log_file_name("hcbr", -1), std::fstream::in | std::fstream::out | std::fstream::app);
+        log << log_run << std::endl;
+        log.close();
+    }
+
+    end_time = std::chrono::steady_clock::now();
     diff = end_time - start_global_time;
     time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-    log_run += std::to_string(time) + " , "
-              + std::to_string(min_dfr) + " , "
-              + std::to_string(max_dfr) + " , "
-              + std::to_string(avg_dfr / (limit_examples - starting_case)) + " , "
-              + std::to_string(100 * min_dfr_pct) + " , "
-              + std::to_string(100 * max_dfr_pct) + " , "
-              + std::to_string(100 * avg_dfr_pct / (limit_examples - starting_case)) + " , " 
-              + std::to_string(accuracy) + " , "
-              + std::to_string(tp) + " , "
-              + std::to_string(fp) + " , "
-              + std::to_string(fn) + " , "
-              + std::to_string(tn) + " , "
-              + std::to_string(tp / double(tp + fn))  + " , "
-              + std::to_string(tn / double(tn + fp))  + " , "
-              + std::to_string(tp / double(tp + fp))  + " , "
-              + std::to_string(tn / double(tn + fn))  + " , "
-              + std::to_string(fn / double(fn + tp))  + " , "
-              + std::to_string(fp / double(fp + tn))  + " , "
-              + std::to_string(fp / double(fp + tp))  + " , "
-              + std::to_string(fn / double(fn + tn))  + " , "
-              + std::to_string(2*tp / double(2*tp + fp + fn))  + " , "
-              + std::to_string(((long long int)(tp * tn) - (fp * fn)) / sqrt((long long int)(tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)))  + " , "
-              + std::to_string(avg_diff_good_1 / tp) + " , "
-              + std::to_string(avg_diff_good_0 / tn) + " , "
-              + std::to_string(avg_diff_bad_1 / fp) + " , "
-              + std::to_string(avg_diff_bad_0 / fn) + " , "
-              + std::to_string(100 * avg_diff_good_1_pct / tp) + " , "
-              + std::to_string(100 * avg_diff_good_0_pct / tn) + " , "
-              + std::to_string(100 * avg_diff_bad_1_pct / fp) + " , "
-              + std::to_string(100 * avg_diff_bad_0_pct / fn) + " , "
-              + std::to_string(already_in_cb_good / double(already_in_cb)) + " , ";
-    cerr << ((long long int)(tp * tn) - (fp * fn)) / sqrt((long long int)(tp + fp)*(tp + fn)*(tn + fp)*(tn + fn)) << endl;
-    log.open(log_file_name("hcbr", -1), std::fstream::in | std::fstream::out | std::fstream::app);
-    log << log_run << std::endl;
-    log.close();
+    cerr << std::to_string(time) << endl;
 
     if(verbose) {
         cb.display();

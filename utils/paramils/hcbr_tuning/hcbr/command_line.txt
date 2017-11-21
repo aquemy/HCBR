@@ -1,1 +1,1 @@
-../../../../build/hcbr_learning -x 834500001 -c ../../../../data/breast_casebase.txt -d 0.7 -e -0.01 -g -0.15 -i -l 629 -o ../../../../data/breast_outcomes.txt -p 100   > test_wrapper.txt
+../../../../build/hcbr_learning -x -1 -c ../../../../data/credo_casebase.txt -d 0.0 -e 0.0 -g 0.0 -i -l 10000 -o ../../../../data/credo_outcomes.txt -p 1  -z > test_wrapper.txt

@@ -1,11 +1,11 @@
 algo = ../hcbr_wrapper.sh
 execdir = hcbr_tuning/hcbr
-deterministic = 0
+deterministic = 1
 run_obj = qual
 overall_obj = mean
 cutoff_time = max
 cutoff_length = max
-tunerTimeout = 600
+tunerTimeout = 60
 paramfile = hcbr_tuning/hcbr/hcbr-params.txt
 outdir = hcbr_tuning/results/hcbr/paramils
 instance_file = hcbr_tuning/hcbr-inst.txt

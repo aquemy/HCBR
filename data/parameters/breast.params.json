@@ -1,8 +1,8 @@
 {
-	"learning_phases": 0,
-	"eta": -0.5,
-	"delta": 0.4,
-	"gamma": 0.01,
+	"learning_phases": 1,
+	"eta": 0.0,
+	"delta": 0.0,
+	"gamma": 0.00,
 	"heuristic": 0,
 	"online": 0
 }

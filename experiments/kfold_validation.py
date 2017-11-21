@@ -32,6 +32,9 @@ def main():
     seed = None
     if len(sys.argv) > 5:
         seed = sys.argv[5]
+    l = 1.0
+    if len(sys.argv) > 6:
+        l = float(sys.argv[6])
     file_name = path_casebase.split('/')[-1].split('.')[0]
     base_name = '_'.join(file_name.split('.')[0].split('_')[:-1])
 
@@ -41,6 +44,10 @@ def main():
     if len(cases) != len(outcomes):
         print('Casebase and outcome file are not the same length!')
         exit(1)
+    n = int(len(cases) * l)
+
+    cases = cases[:n]
+    outcomes = outcomes[:n]
 
     n = len(cases)
     hf = float(n) / k

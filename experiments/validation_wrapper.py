@@ -12,6 +12,32 @@ DATA_FOLDER = '../data'
 KFOLD_SCRIPT = 'kfold_validation.py'
 ACCURACY_ROW = 4
 
+METAOPTIMIZATION = '../utils/paramils/paramils_run.py'
+METAOPTIMIZATION_TIMEOUT = 60
+
+def convert_paramILS_to_HCBR_params(paramILS):
+    convert_map = {
+        'e': 'eta',
+        'd': 'delta',
+        'g': 'gamma',
+        'i': 'online',
+        'p': 'learning_phases',
+        'z': 'heuristic'
+    }
+    def if_exists(k, v):
+        if k in convert_map:
+            return convert_map[k], v
+        else:
+            return None, None
+    params = {}
+    for k, v in paramILS.iteritems():
+        key, val = if_exists(k, v)
+        if key is not None:
+            params[key] = val
+    return params
+
+
+
 def read_outcomes(path):
     cases = []
     headers = []
@@ -34,9 +60,11 @@ def main():
     only_analysis = False
     if len(sys.argv) > 5:
         only_analysis = True if sys.argv[5] == 'True' else False
-    suffix = ""
     if len(sys.argv) > 6:
-        suffix = "_" + sys.argv[6]
+        nested_CV = True if sys.argv[6] == 'True' else False
+    suffix = ""
+    if len(sys.argv) > 7:
+        suffix = "_" + sys.argv[7]
 
     path = instance_name
     file_name = path.split('/')[-1].split('.')[0]
@@ -128,8 +156,46 @@ def main():
     for i in range(0, k):
         print('# - Run {}'.format(i))
         run_nb = 'run_{}'.format(i)
+        fold_casebase = os.path.join("../experiments", base_output_path, "input_data", "{}_casebase.fold_{}.txt".format(instance_name, i))
+        fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data", "{}_outcomes.fold_{}.txt".format(instance_name, i))
         fold_output_path = os.path.join("../experiments", base_output_path, run_nb)
         if not only_analysis:
+            if(nested_CV):
+                print('# Creating nested k-fold for Meta-optimization')
+                fold_creation_output = os.path.join(base_output_path, 'kfold_creation.{}.log'.format(i))
+                cmd_fold_validation = "python {} {} {} {} {} {} {} > {}".format(
+                    KFOLD_SCRIPT,
+                    k,
+                    fold_casebase,
+                    fold_outcomes,
+                    os.path.join(base_output_path, "input_data/nested_fold{}".format(i)),
+                    seed if seed is not None else "",
+                    l,
+                    fold_creation_output
+                    )
+                print('CMD: {}'.format(cmd_fold_validation))
+                rc = subprocess.call(cmd_fold_validation, shell=True)
+                print('RC: {}'.format(rc))
+                if rc:
+                    exit(1)
+                print('# Start Meta-optimization for Model Selection')
+                nested_fold_casebase = os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_casebase.fold_{}.txt".format(instance_name, i))
+                nested_fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_outcomes.fold_{}.txt".format(instance_name, i))
+                cmd = "python {} {} {} {} {}".format(
+                        METAOPTIMIZATION,
+                        nested_fold_casebase,
+                        nested_fold_outcomes,
+                        METAOPTIMIZATION_TIMEOUT,
+                        int(examples * l)
+                    )
+                print('# CMD: {}'.format(cmd))
+                p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                output, err = p.communicate()
+                output = json.loads(output)
+                best_params = convert_paramILS_to_HCBR_params(output)
+                print('# Converted params: {}'.format(best_params))
+                parameters.update(best_params)
+                print('# Final configuration to be used: {}'.format(parameters))
             try:
                 shutil.rmtree(fold_output_path)
             except:
@@ -140,8 +206,7 @@ def main():
                 if e.errno != errno.EEXIST:
                     print('[ERROR] Could not create output path for {}'.format(run_nb))
                     continue
-            fold_casebase = os.path.join("../experiments", base_output_path, "input_data", "{}_casebase.fold_{}.txt".format(instance_name, i))
-            fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data", "{}_outcomes.fold_{}.txt".format(instance_name, i))
+            
             cmd = "{} -c {} -o {} -l {} -s -p {} -e {} -d {} -g {} {} {} -b {} > {} 2> {}".format(
                     executable_path,
                     fold_casebase,
@@ -151,8 +216,8 @@ def main():
                     parameters['eta'],
                     parameters['delta'],
                     parameters['gamma'],
-                    '-i' if parameters['online'] == 1 else "",
-                    '-z' if parameters['heuristic'] == 1 else "",
+                    '-i' if int(parameters['online']) == 1 else "",
+                    '-z' if int(parameters['heuristic']) == 1 else "",
                     i,
                     os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
                     os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))

@@ -2,6 +2,8 @@ import csv
 import os
 import sys
 
+import data_processing
+
 def feature_to_index(cases, column_nb, offset=0):
     feature_set = set()
     for case in cases:
@@ -51,20 +53,13 @@ def read_cases(path):
 
     return cases
 
-def reduce_precision(cases, prec=2):
-    for i, case in enumerate(cases):
-        for j, f in enumerate(case[:-1]):
-            cases[i][j] = '{:.2}'.format(round(float(f), prec))
-        #print(cases[i])
-    return cases
-
 
 def main():
     path = sys.argv[1]
     file_name = path.split('/')[-1].split('.')[0]
     base_name = file_name.split('.')[0]
     cases = read_cases(path)
-    cases = reduce_precision(cases, 2)
+    cases = data_processing.reduce_casecase_precision(cases, 2)
 
     outcome_row = 6 
     except_features_no_outcomes = [6]

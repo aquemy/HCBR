@@ -26,7 +26,7 @@ def read_raw(path):
     with open(path, 'rb') as file:
         data = file.readlines()
         for i, row in enumerate(data):
-            cases.append(row)
+            cases.append(map(float, row.split()))
     return cases
 
 def average(data, index):
@@ -370,26 +370,16 @@ def main():
     Calculate the average table for the raw standard output
     '''
 
-    data_run = []
+    data_run = read_raw(os.path.join(folder, "run_{}".format(0), "output_run_{}.txt".format(0)))
     average_data = read_raw(os.path.join(folder, "run_{}".format(0), "output_run_{}.txt".format(0)))
-    for k, l in enumerate(average_data):
-        #print(l)
-        for j, _ in enumerate(l):
-            #print(average_data[k][j])
-            try:
-                average_data[k][j] = float(average_data[k][j])
-            except Exception as e:
-                pass
-                #print("{} {}".format(e, average_data[k][j]))
-
     for i in range(1, nb_runs):
         data_run =read_raw(os.path.join(folder, "run_{}".format(i), "output_run_{}.txt".format(i)))
         for k, l in enumerate(data_run):
             #print('LINE {}'.format(l))
             for j, v in enumerate(l):
                 try:
-                    #print(type(v),v, float(v.strip()))
-                    average_data[k][j] += float(v.strip())
+                    #print(average_data[k][j], type(average_data[k][j]), type(v),v, float(v.strip()))
+                    average_data[k][j] += float(v)
                 except Exception as e:
                     pass
                     #print(e)

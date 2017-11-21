@@ -5,8 +5,8 @@ i {0,1}[1]
 p {0,1,5,10,15,25,40,50,75,100,250,500,1000}[1]
 z {0,1}[1]
 r {0}[0]
-c {../../../../data/breast_casebase.txt}[../../../../data/breast_casebase.txt]
-o {../../../../data/breast_outcomes.txt}[../../../../data/breast_outcomes.txt]
-l {629}[629]
+c {../../../../data/credo_casebase.txt}[../../../../data/credo_casebase.txt]
+o {../../../../data/credo_outcomes.txt}[../../../../data/credo_outcomes.txt]
+l {10000}[10000]
 
 
