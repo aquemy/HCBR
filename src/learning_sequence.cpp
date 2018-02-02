@@ -305,6 +305,17 @@ int main(int argc, char** argv)
     auto diff = end_time - start_time;
     auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
 
+    // SAVE THE HYPERGRAPH REPRESENTATION
+    // - intersection familly (e -> f)
+    // - f_to_c 
+    // - e_to_c
+    // - c_to_e
+    // - e_to_c_by_o
+    // - e_to_outcome
+    // - e_to_outcome_count -> Calculated from e_to_outcome
+
+    // END SAVE THE HYPERGRAPH REPRESENTATION
+
     auto min_size_e = size(cb.intersection_family[0]);
     auto max_size_e = min_size_e;
     auto average_size_e = 0.;
