@@ -73,13 +73,13 @@ auto random_prediction(auto gen) {
 ///
 /// \return tuple Prediction weigths in a tuple
 ////////////////////////////////////////////////////////////
-std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double eta, double delta, double avg_0, double avg_1) {
-    double a = pred_0;
-    double b = pred_1;
-    if (a + delta + b  + eta > 0) {
-        pred_0 = (a + eta) / (a + b  + eta + delta);
-        pred_1 = (b + delta) / (a + b + eta + delta);
-    }
+std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, double delta, double avg_0, double avg_1) {
+    //double a = pred_0;
+    //double b = pred_1;
+    //if (a + delta + b  + eta > 0) {
+    //    pred_0 = (a + eta) / (a + b  + eta + delta);
+    //    pred_1 = (b + delta) / (a + b + eta + delta);
+    //}
     /*
     if (a + b > 0 || eta > 0) {
         pred_0 = (a + eta + avg_0) / (a  + b + eta + avg_0 + avg_1);
@@ -119,44 +119,26 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 ///
 /// \return int Final prediction (0 or 1)
 ////////////////////////////////////////////////////////////
-int prediction_rule(auto pred, auto rdf, auto delta, auto eta, auto gen) {
+int prediction_rule(auto pred, auto rdf, auto delta, auto eta0, auto eta1, auto bar_eta0, auto bar_eta1, auto l0, auto l1, auto gen) {
     auto prediction = 0;
-    if( (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred)) > delta) {
-        prediction = 1;
+    auto s =  std::get<1>(pred) - std::get<0>(pred);
+    auto r_0 = (bar_eta0 / (1 - bar_eta0)) * std::get<1>(pred);
+    auto r_1 = (bar_eta1 / (1 - bar_eta1)) * std::get<0>(pred);
 
-    }
-
-
-    /*
-    if(prediction == 1) {
-        if(abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<1>(pred) < 0.0001) {
-            prediction = 0;
-            std::cerr << "R1 " << abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<1>(pred) << std::endl;
-        }
-    } else if(prediction == 0)
-    {
-        if(abs(std::get<0>(pred) - std::get<1>(pred)) / std::get<0>(pred) < 0.0001) {
+    if(s > 0) {
+        if (std::get<1>(pred) > r_1 and std::get<1>(pred) > eta1) {
             prediction = 1;
-            std::cerr << "R0 " << abs(std::get<1>(pred) - std::get<0>(pred)) / std::get<0>(pred) << std::endl;
+        } else {
+            prediction = l1;
         }
-        
+
+    } else {
+        if (std::get<0>(pred) > r_0 and std::get<0>(pred) > eta0) {
+            prediction = 0;
+        } else {
+            prediction = l0;
+        }
     }
-    */
-    //if(rdf > delta) {
-    /*
-    if(eta < 0) {
-        std::cerr << delta << " " << std::get<1>(pred) - std::get<0>(pred) << " " << std::get<1>(pred) << " " << std::get<0>(pred) << " ";
-        if(std::get<1>(pred) > std::get<0>(pred) && (std::get<1>(pred) - std::get<0>(pred)) < delta) {
-            std::cerr << " R ";
-            prediction = random_prediction(gen);
-        }
-        std::cerr << std::endl;
-    }
-    else {
-        if(std::get<0>(pred) > std::get<1>(pred) && (std::get<0>(pred) - std::get<1>(pred)) < delta) {
-            prediction = random_prediction(gen);
-        }
-    }*/
     return prediction;
 }
 

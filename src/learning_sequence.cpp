@@ -21,7 +21,16 @@ int main(int argc, char** argv)
 
     TCLAP::CmdLine cmd("Hypergraph Case-Base Reasoner", ' ', "0.0.1");
 
-    TCLAP::ValueArg<double> etaArg("e","eta", "Hyperparameter to add an offset to the default class for prediction", false, 0.,"double", cmd);
+    // Hyperparameters
+    TCLAP::ValueArg<double> eta1Arg("q","eta1", "Hyperparameter eta 1", false, 0.,"double", cmd);
+    TCLAP::ValueArg<double> eta0Arg("a","eta0", "Hyperparameter eta 0", false, 0.,"double", cmd);
+    TCLAP::ValueArg<double> bar_eta1Arg("e","bar_eta1", "Hyperparameter bar eta 1", false, 0.,"double", cmd);
+    TCLAP::ValueArg<double> bar_eta0Arg("t","bar_eta0", "Hyperparameter bar eta 0", false, 0.,"double", cmd);
+
+    TCLAP::ValueArg<int> l0Arg("y","l0", "Hyperparameter L0", false, 0, "int", cmd);
+    TCLAP::ValueArg<int> l1Arg("u","l1", "Hyperparameter L1", false, 1, "int", cmd);
+
+
     TCLAP::ValueArg<double> deltaArg("d","delta", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
     TCLAP::ValueArg<double> gammaArg("g","gamma", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
 
@@ -51,7 +60,13 @@ int main(int argc, char** argv)
     //if(delta < -1 || delta > 1)
     //    throw std::domain_error("Delta must belong to [-1,1]");
 
-    const auto eta = etaArg.getValue();
+    const auto eta1 = eta1Arg.getValue();
+    const auto eta0 = eta0Arg.getValue();
+    const auto bar_eta1 = bar_eta1Arg.getValue();
+    const auto bar_eta0 = bar_eta0Arg.getValue();
+
+    const auto l1 = l1Arg.getValue();
+    const auto l0 = l0Arg.getValue();
 
     const auto casebase_file = cbFileArg.getValue();
     const auto outcomes_file = oFileArg.getValue();
@@ -503,8 +518,8 @@ int main(int argc, char** argv)
                 pred_0 += r * cb.e_intrinsic_strength[0][k.first];
                 pred_1 += r * cb.e_intrinsic_strength[1][k.first];
             }
-            pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
-            prediction = prediction_rule(pred, rdf, gamma, eta, gen);
+            pred = normalize_prediction(pred_0, pred_1, 0, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
+            prediction = prediction_rule(pred, rdf, 0, 0, 0, 0, 0, 0, 1, gen);// gamma, eta, gen);
 
             avr_good += 1 - abs(o - prediction);
             if(prediction == 1)
@@ -691,9 +706,9 @@ int main(int argc, char** argv)
                 pred_1 += r * cb.e_intrinsic_strength[1][k.first];
                
             }
-            pred = normalize_prediction(pred_0, pred_1, eta, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
+            pred = normalize_prediction(pred_0, pred_1, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
 
-            prediction = prediction_rule(pred, rdf, gamma, eta, gen);
+            prediction = prediction_rule(pred, rdf, gamma, eta0, eta1, bar_eta0, bar_eta1, l0, l1, gen);
 
             if (check_if_in_cb) {
                 auto index_case = std::find(begin(cb.cases), end(cb.cases), nc);
@@ -766,18 +781,21 @@ int main(int argc, char** argv)
                      << prediction << " " 
                      << avr_good << " " 
                      << accuracy << " " 
+                     << std::setprecision(15)
                      << std::get<1>(pred) << " " 
                      << std::get<0>(pred) << " "
-                     << rdf << " " 
-                     << pred_0 + rdf + eta << " " 
-                     << iteration_time << " " 
-                     << total_time << " " 
-                     << std::setprecision(15)
-                     << std::get<1>(pred) - std::get<0>(pred) << " "
-                     << avg_diff_bad_1 / (j+1) << " "
-                     << avg_diff_bad_0 / (j+1) << " "
-                     << min_toward_1 << " "
-                     << min_toward_0 << " "
+                     //<< rdf << " " 
+                     //<< pred_0 + rdf << " " 
+                     //<< iteration_time << " " 
+                     //<< total_time << " " 
+                     
+                     //<< std::get<1>(pred) - std::get<0>(pred) << " "
+                     //<< avg_diff_bad_1 / (j+1) << " "
+                     //<< avg_diff_bad_0 / (j+1) << " "
+                     //<< min_toward_1 << " "
+                     //<< min_toward_0 << " "
+                     << std::get<1>(pred) - std::get<0>(pred) << " " 
+                     << std::max(std::get<1>(pred), std::get<0>(pred)) / (abs(std::get<1>(pred)) + abs(std::get<0>(pred)))
                      << endl;
                 ++j;
                 log << iteration_time << " , " 
@@ -803,7 +821,7 @@ int main(int argc, char** argv)
                     << std::to_string(100 * avg_diff_good_1_pct / tp) << " , "
                     << std::to_string(100 * avg_diff_good_0_pct / tn) << " , "
                     << std::to_string(100 * avg_diff_bad_1_pct / fp) << " , "
-                    << std::to_string(100 * avg_diff_bad_0_pct / fn) << " , "
+                    << std::to_string(100 * avg_diff_bad_0_pct / fn) 
                     << endl;
             }
         }
