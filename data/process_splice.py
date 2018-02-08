@@ -50,7 +50,7 @@ def read_cases(path):
         reader = csvfile.readlines()
         n = len(reader[0].split(' '))
         for i, row in enumerate(reader):
-            cases.append(row.split(' '))
+            cases.append(row.split(' ')[:-1])
 
     return cases
 
