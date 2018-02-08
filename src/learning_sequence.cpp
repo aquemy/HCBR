@@ -50,10 +50,31 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<int> seedArg("x","seed","Seed for the pseudo-random generator", false, 0, "int", cmd);
     TCLAP::SwitchArg predArg("w","no-prediction","Deactivate the prediction (use for nested crossvalidation)", cmd, false);
 
+    TCLAP::ValueArg<string> mu0FileArg("m", "mu0","File with the mu0 vector", false, "", "string", cmd);
+    TCLAP::ValueArg<string> mu1FileArg("j", "mu1","File with the mu1 vector", false, "", "string", cmd);
+
+    TCLAP::ValueArg<double> bias_Arg("","biais", "Biais for the decision function", false, 0.,"double", cmd);
+
     cmd.parse(argc, argv);
     std::fstream log;
 
     // 1. DATA
+    
+    const auto bias = bias_Arg.getValue();
+    const auto mu0_path = mu0FileArg.getValue();
+    const auto mu1_path = mu1FileArg.getValue();
+    auto mu1 = vector<double>();
+    auto mu0 = vector<double>();
+    try {
+        std::cerr << mu0_path << " " << mu1_path << std::endl;
+        mu1 = read_vector(mu1_path);
+        mu0 = read_vector(mu0_path);
+    } catch (std::exception &e)  // catch any exceptions
+    {
+        cerr << "Error: " << e.what() << endl;
+        return 3;
+    }
+
     // 1.1 CMD verification
     const auto delta = deltaArg.getValue();
     const auto gamma = gammaArg.getValue();
@@ -96,6 +117,7 @@ int main(int argc, char** argv)
     auto online = iArg.getValue();
     auto verbose = vArg.getValue();
     auto starting_case = nArg.getValue(); // TODO: Test validity
+    std::cerr << "STARTING" << starting_case << " " << outcomes[starting_case] << std::endl;
     auto sample_out = sArg.getValue();
     auto keep_offset = kArg.getValue();
     auto limit_examples = lArg.getValue() + starting_case;
@@ -309,9 +331,10 @@ int main(int argc, char** argv)
     }
 
     auto start_global_time = std::chrono::steady_clock::now();
-    cerr << "# Add cases..." << endl;
+    cerr << "# Add cases..." << starting_case << endl;
     auto start_time = std::chrono::steady_clock::now();
     for(auto i = starting_case; i < limit_examples; ++i) {
+        //std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << std::endl;
         o = outcomes[indexes[i]];
         nc = cases[indexes[i]];
         cb.add_case(nc, o, false);//online);
@@ -321,14 +344,24 @@ int main(int argc, char** argv)
     auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
 
     // SAVE THE HYPERGRAPH REPRESENTATION
-    // - intersection familly (e -> f)
-    // - f_to_c 
-    // - e_to_c
-    // - c_to_e
-    // - e_to_c_by_o
-    // - e_to_outcome
-    // - e_to_outcome_count -> Calculated from e_to_outcome
-
+    // MATRICE W
+    std::cerr << "Saving [" << limit_examples-starting_case << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
+    std::ofstream w_outfile;
+    w_outfile.open("W.txt", std::ofstream::out | std::ofstream::trunc);
+    for(auto i = starting_case; i < limit_examples; ++i) {
+        auto c = cases[indexes[i]];
+        auto n = std::size(c);
+        auto k_ = 0;
+        for(auto k = 0; k < std::size(cb.intersection_family); ++k) {
+            if(std::find(std::begin(cb.c_to_e[i]), std::end(cb.c_to_e[i]), k) != std::end(cb.c_to_e[i])) {
+                w_outfile << std::setprecision(15) << std::size(cb.intersection_family[k]) / double(n) << " ";
+            }
+            else
+                w_outfile << "0 ";
+        }
+        w_outfile << std::endl;
+    }
+    w_outfile.close();
     // END SAVE THE HYPERGRAPH REPRESENTATION
 
     auto min_size_e = size(cb.intersection_family[0]);
@@ -455,12 +488,35 @@ int main(int argc, char** argv)
 
 
     cerr << "# Calculate intrinsic strength..." << endl;
-    start_time = std::chrono::steady_clock::now();
-    cb.calculate_strength(log, run_id);
-    end_time = std::chrono::steady_clock::now();
-    diff = end_time - start_time;
-    time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
-    log_run += std::to_string(time) + " , ";
+    if (std::size(mu1) == std::size(mu0) and std::size(mu1) > 0) {
+        cerr << "# Restoring instrinc strength" << endl;
+        for(auto i = 0; i < std::size(mu0); ++i) {
+            cb.e_intrinsic_strength[0][i] = mu0[i];
+            cb.e_intrinsic_strength[1][i] = mu1[i];
+        }
+    } else {
+        start_time = std::chrono::steady_clock::now();
+        cb.calculate_strength(log, run_id);
+        end_time = std::chrono::steady_clock::now();
+        diff = end_time - start_time;
+        time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
+        log_run += std::to_string(time) + " , ";
+    }
+    // SAVE THE HYPERGRAPH REPRESENTATION
+    // VECTOR MU
+    std::ofstream mu_outfile;
+    mu_outfile.open("Mu_0.txt", std::ofstream::out | std::ofstream::trunc);
+    for(auto e: cb.e_intrinsic_strength[0]) {
+        mu_outfile << std::setprecision(15) << e.second << std::endl;
+    }
+    mu_outfile.close();
+    mu_outfile.open("Mu_1.txt", std::ofstream::out | std::ofstream::trunc);
+    for(auto e: cb.e_intrinsic_strength[1]) {
+        mu_outfile << std::setprecision(15) << e.second << std::endl;
+    }
+    mu_outfile.close();
+    // END SAVE THE HYPERGRAPH REPRESENTATION
+
 
     cerr << "# Learning phase..." << endl;
     auto offset_0 = 0.;
@@ -484,11 +540,21 @@ int main(int argc, char** argv)
     auto tn = 0;
     auto fp = 0;
     auto fn = 0;
+
+    std::ofstream pred_outfile; 
+    pred_outfile.open("training_set_prediction_post_training.txt", std::ofstream::out | std::ofstream::trunc);
+    pred_outfile << "index correct pred s_1 s_0" << endl;
     log.open(log_file_name("training", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
-    for(auto iter = 0; iter < max_learning_iterations; ++iter) 
+    for(auto iter = -1; iter < max_learning_iterations + 1; ++iter) 
     {
         auto start_time = std::chrono::steady_clock::now();
-        cerr << " - Phase " << iter + 1 << endl;
+        if(iter ==  max_learning_iterations) {
+            cerr << " - Verification" << endl;
+        } else if (iter == -1)
+        {
+            cerr << " - Before training" << endl;
+        } else
+            cerr << " - Phase " << iter + 1 << endl;
         avg_diff_good_0 = 0.;
         avg_diff_good_1 = 0.;
         avg_diff_good_0_pct = 0.;
@@ -500,17 +566,21 @@ int main(int argc, char** argv)
         log_training = "";
         for(auto i = starting_case; i < limit_examples; ++i) 
         {
-            o = outcomes[indexes[i]];
+            //if(outcomes[indexes[i]] != cb.outcomes[indexes[i]])
+            //    std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << " -> " << cb.outcomes[indexes[i]] << std::endl;
+            o = cb.outcomes[indexes[i]];//outcomes[indexes[i]];
             nc = cases[indexes[i]];
             proj = cb.projection(nc);
             rdf = std::size(proj.second) / double(std::size(nc));
            
+           /*
             decltype(nc) v(size(nc)+size(proj.second));
             decltype(v)::iterator it;
             it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
             v.resize(it-begin(v));
+            */
 
-            auto non_disc_features = int(size(v));
+            auto non_disc_features = double(std::size(nc)); //int(size(v));
             pred_0 = 0.;
             pred_1 = 0.;
             for(const auto& k: proj.first) {
@@ -519,7 +589,13 @@ int main(int argc, char** argv)
                 pred_1 += r * cb.e_intrinsic_strength[1][k.first];
             }
             pred = normalize_prediction(pred_0, pred_1, 0, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
-            prediction = prediction_rule(pred, rdf, 0, 0, 0, 0, 0, 0, 1, gen);// gamma, eta, gen);
+            prediction = prediction_rule(pred, rdf, 0, 0, 0, 0, 0, 0, 1, bias, gen);// gamma, eta, gen);
+            if(iter == -1 or iter >= max_learning_iterations) {
+                //cerr << pred_1 << " - " << pred_0 << " = " << pred_1 - pred_0 << " | P : " << prediction << " | " << indexes[i] << " | " << o << endl;
+            }
+
+            if(iter >= max_learning_iterations)
+                pred_outfile << std::setprecision(15) << indexes[i] << " " << o << " " <<  prediction << " " << pred_1 << " " << pred_0 << std::endl;
 
             avr_good += 1 - abs(o - prediction);
             if(prediction == 1)
@@ -544,21 +620,35 @@ int main(int argc, char** argv)
                     avg_diff_good_0 += std::get<1>(pred) - std::get<0>(pred);
                     avg_diff_good_0_pct += (std::get<1>(pred) - std::get<0>(pred)) / (std::get<1>(pred) + std::get<0>(pred));
                 }
+            if(iter > -1 and iter < max_learning_iterations) {
+                // cerr << "CASE " << i << " pred: " << prediction << " | real: " << o << " | abs diff " << abs(o - prediction) << std::endl;
+                if(abs(o - prediction) != 0) {
+                    //cerr << "CASE " << i << " MISCLASSIFIED" << std::endl;
+                    for(const auto& k: proj.first) {
+                        if(prediction == 1) {
+                            r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                            auto err = abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]);
+                            //cerr << "    ERROR E" << k.first << " = " << err << std::endl;
+                            //cb.e_intrinsic_strength[0][k.first] += double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            //cb.e_intrinsic_strength[1][k.first] -= double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[0][k.first] += r * err; //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[1][k.first] -= r * err; //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                        } else {
 
-            if(abs(o - prediction) != 0) {
-                for(const auto& k: proj.first) {
-                    if(prediction == 1) {
-                        r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                        //cb.e_intrinsic_strength[0][k.first] += double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        //cb.e_intrinsic_strength[1][k.first] -= double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        cb.e_intrinsic_strength[0][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        cb.e_intrinsic_strength[1][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                    } else {
-                        r = size(cb.intersection_family[k.first]) / double(non_disc_features);
-                        //cb.e_intrinsic_strength[0][k.first] -= double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        //cb.e_intrinsic_strength[1][k.first] += double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        cb.e_intrinsic_strength[0][k.first] -= r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
-                        cb.e_intrinsic_strength[1][k.first] += r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                            auto err = abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]);
+                            //cerr << "    ERROR E" << k.first << " = " << err << std::endl;
+                            //cb.e_intrinsic_strength[0][k.first] -= double(nb_bad_0) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            //cb.e_intrinsic_strength[1][k.first] += double(nb_bad_1) / (nb_bad_0 + nb_bad_1) * r * abs(cb.e_intrinsic_strength[0][k.first] - cb.e_intrinsic_strength[1][k.first]); //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[0][k.first] -= r * err; //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                            cb.e_intrinsic_strength[1][k.first] += r * err; //abs(std::get<1>(pred) - std::get<0>(pred)) / size(proj.first);
+                        }
+                        /*
+                        if(cb.e_intrinsic_strength[0][k.first] < 0)
+                            cb.e_intrinsic_strength[0][k.first] = 0;
+                        if(cb.e_intrinsic_strength[1][k.first] < 0)
+                            cb.e_intrinsic_strength[1][k.first] = 0;
+                        //*/
                     }
                 }
             }
@@ -594,6 +684,7 @@ int main(int argc, char** argv)
             }
             //*/
         }
+        pred_outfile.close();
         auto end_time = std::chrono::steady_clock::now();
         auto diff = end_time - start_time;
         auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
@@ -639,6 +730,19 @@ int main(int argc, char** argv)
               + std::to_string(fp) + " , "
               + std::to_string(fn) + " , "
               + std::to_string(tn) + " , ";
+
+
+    //std::ofstream mu_outfile;
+    mu_outfile.open("Mu_0_post_training.txt", std::ofstream::out | std::ofstream::trunc);
+    for(auto e: cb.e_intrinsic_strength[0]) {
+        mu_outfile << std::setprecision(15) << e.second << std::endl;
+    }
+    mu_outfile.close();
+    mu_outfile.open("Mu_1_post_training.txt", std::ofstream::out | std::ofstream::trunc);
+    for(auto e: cb.e_intrinsic_strength[1]) {
+        mu_outfile << std::setprecision(15) << e.second << std::endl;
+    }
+    mu_outfile.close();
     
     auto j = 0;
     // Reset for prediction
@@ -667,6 +771,11 @@ int main(int argc, char** argv)
     min_dfr_pct = 1.;
     max_dfr_pct = 0.;
     avg_dfr_pct = 0.;
+
+
+    pred_outfile.open("predictions.txt", std::ofstream::out | std::ofstream::trunc);
+    pred_outfile << "index correct pred s_1 s_0" << endl;
+
     if(!no_pred) {
         cerr << "# Predictions" << endl;
         log.open(log_file_name("prediction", run_id), std::fstream::in | std::fstream::out | std::fstream::app);
@@ -708,7 +817,9 @@ int main(int argc, char** argv)
             }
             pred = normalize_prediction(pred_0, pred_1, delta, 0, 0); //avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
 
-            prediction = prediction_rule(pred, rdf, gamma, eta0, eta1, bar_eta0, bar_eta1, l0, l1, gen);
+            prediction = prediction_rule(pred, rdf, gamma, eta0, eta1, bar_eta0, bar_eta1, l0, l1, bias, gen);
+
+            pred_outfile << std::setprecision(15) << indexes[i] << " " << o << " " <<  prediction << " " << pred_1 << " " << pred_0 << std::endl;
 
             if (check_if_in_cb) {
                 auto index_case = std::find(begin(cb.cases), end(cb.cases), nc);
@@ -784,16 +895,15 @@ int main(int argc, char** argv)
                      << std::setprecision(15)
                      << std::get<1>(pred) << " " 
                      << std::get<0>(pred) << " "
-                     //<< rdf << " " 
-                     //<< pred_0 + rdf << " " 
-                     //<< iteration_time << " " 
-                     //<< total_time << " " 
-                     
-                     //<< std::get<1>(pred) - std::get<0>(pred) << " "
-                     //<< avg_diff_bad_1 / (j+1) << " "
-                     //<< avg_diff_bad_0 / (j+1) << " "
-                     //<< min_toward_1 << " "
-                     //<< min_toward_0 << " "
+                     << rdf << " " 
+                     << pred_0 + rdf << " " 
+                     << iteration_time << " " 
+                     << total_time << " " 
+                     << std::get<1>(pred) - std::get<0>(pred) << " "
+                     << avg_diff_bad_1 / (j+1) << " "
+                     << avg_diff_bad_0 / (j+1) << " "
+                     << min_toward_1 << " "
+                     << min_toward_0 << " "
                      << std::get<1>(pred) - std::get<0>(pred) << " " 
                      << std::max(std::get<1>(pred), std::get<0>(pred)) / (abs(std::get<1>(pred)) + abs(std::get<0>(pred)))
                      << endl;
@@ -870,7 +980,7 @@ int main(int argc, char** argv)
         log << log_run << std::endl;
         log.close();
     }
-
+    pred_outfile.close();
     end_time = std::chrono::steady_clock::now();
     diff = end_time - start_global_time;
     time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();

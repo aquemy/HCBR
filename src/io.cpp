@@ -85,3 +85,22 @@ std::map<int, std::string> read_features(std::string path) {
     }
     return f;
 }
+
+////////////////////////////////////////////////////////////
+/// \brief Read a matrice from a file
+///
+/// \param path Path to the outcomes file
+///
+/// \return The outcomes
+////////////////////////////////////////////////////////////
+std::vector<double> read_vector(std::string path) {
+    std::ifstream file(path);
+    std::vector<double> v;
+    std::string line;
+    if (file) {
+        while (std::getline(file, line)) {
+            v.push_back(double(std::stod(line)));
+        }
+    }
+    return v;
+}

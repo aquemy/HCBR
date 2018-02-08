@@ -119,13 +119,13 @@ std::tuple<double, double> normalize_prediction(double pred_0, double pred_1, do
 ///
 /// \return int Final prediction (0 or 1)
 ////////////////////////////////////////////////////////////
-int prediction_rule(auto pred, auto rdf, auto delta, auto eta0, auto eta1, auto bar_eta0, auto bar_eta1, auto l0, auto l1, auto gen) {
+int prediction_rule(auto pred, auto rdf, auto delta, auto eta0, auto eta1, auto bar_eta0, auto bar_eta1, auto l0, auto l1, auto bias, auto gen) {
     auto prediction = 0;
     auto s =  std::get<1>(pred) - std::get<0>(pred);
     auto r_0 = (bar_eta0 / (1 - bar_eta0)) * std::get<1>(pred);
     auto r_1 = (bar_eta1 / (1 - bar_eta1)) * std::get<0>(pred);
 
-    if(s > 0) {
+    if(s > bias) {
         if (std::get<1>(pred) > r_1 and std::get<1>(pred) > eta1) {
             prediction = 1;
         } else {
