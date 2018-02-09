@@ -6,6 +6,7 @@
 #include <random>
 
 #include <tclap/CmdLine.h>
+#include <json.hpp>
 #include <casebase.cpp>
 #include <io.cpp>
 #include <utils.cpp>
@@ -18,51 +19,21 @@ int main(int argc, char** argv)
     using std::size;
     using std::string;
     using std::vector;
+    using json = nlohmann::json;
 
     TCLAP::CmdLine cmd("Hypergraph Case-Base Reasoner", ' ', "0.0.1");
-
-    // Hyperparameters
-    TCLAP::ValueArg<double> eta1Arg("q","eta1", "Hyperparameter eta 1", false, 0.,"double", cmd);
-    TCLAP::ValueArg<double> eta0Arg("a","eta0", "Hyperparameter eta 0", false, 0.,"double", cmd);
-    TCLAP::ValueArg<double> bar_eta1Arg("e","bar_eta1", "Hyperparameter bar eta 1", false, 0.,"double", cmd);
-    TCLAP::ValueArg<double> bar_eta0Arg("t","bar_eta0", "Hyperparameter bar eta 0", false, 0.,"double", cmd);
-
-    TCLAP::ValueArg<int> l0Arg("y","l0", "Hyperparameter L0", false, 0, "int", cmd);
-    TCLAP::ValueArg<int> l1Arg("u","l1", "Hyperparameter L1", false, 1, "int", cmd);
-
-
-    TCLAP::ValueArg<double> deltaArg("d","delta", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
-    TCLAP::ValueArg<double> gammaArg("g","gamma", "Hyperparameter to control the information treshold. Must be in [0,1].", false, 0.,"double", cmd);
-
-    TCLAP::ValueArg<string> cbFileArg("c", "casebase","File with the casebase description", true, "", "string", cmd);
-    TCLAP::ValueArg<string> oFileArg("o", "outcomes","File with the outomes corresponding to the casebase", true, "", "string", cmd);
-    TCLAP::ValueArg<string> fFileArg("f", "features","File with the feature mapping", false, "", "string", cmd);
-    TCLAP::ValueArg<int> lArg("l","limit", "Limit on the number of cases to add into the casebase", false, -1, "int", cmd);
-    TCLAP::SwitchArg sArg("s","sample-out","Start to calculate the prediction ratio after the training set", cmd, false);
-    TCLAP::SwitchArg kArg("k","keep-offset","Keep the offset in the case number even with the sample-out option", cmd, false);
-    TCLAP::ValueArg<int> nArg("n","starting-number", "Starting case number", false, 0, "int", cmd);
-    TCLAP::SwitchArg rArg("r","shuffle","Shuffle the casebase (testing purposes)", cmd, false);
-    TCLAP::SwitchArg vArg("v","log","Log the final casebase", cmd, false);
-    TCLAP::SwitchArg iArg("i","online","Online algorithm (strength calculated incrementally or at once after insertion)", cmd, false);
-    TCLAP::ValueArg<int> pArg("p","phases","Number of learning phases", false, -1, "int", cmd);
-    TCLAP::ValueArg<int> runArg("b","run-number","ID to identify a run (used for log files name)", false, 0, "int", cmd);
-    TCLAP::SwitchArg hArg("z","heuristic","Check if a case is already in a case-bas to reuse its results", cmd, false);
-    TCLAP::ValueArg<int> seedArg("x","seed","Seed for the pseudo-random generator", false, 0, "int", cmd);
-    TCLAP::SwitchArg predArg("w","no-prediction","Deactivate the prediction (use for nested crossvalidation)", cmd, false);
-
-    TCLAP::ValueArg<string> mu0FileArg("m", "mu0","File with the mu0 vector", false, "", "string", cmd);
-    TCLAP::ValueArg<string> mu1FileArg("j", "mu1","File with the mu1 vector", false, "", "string", cmd);
-
-    TCLAP::ValueArg<double> bias_Arg("","biais", "Biais for the decision function", false, 0.,"double", cmd);
+    TCLAP::ValueArg<string> param_file_arg("", "params","JSON parameter file (c.f. documentation for examples)", false, "./params.json", "string", cmd);
 
     cmd.parse(argc, argv);
     std::fstream log;
 
+    // TODO: Check if the location exists, and if the parameter file is correct
+    auto param_file_path = param_file_arg.getValue();
+    auto params = load_and_validate_parameters(param_file_path);
+
     // 1. DATA
-    
-    const auto bias = bias_Arg.getValue();
-    const auto mu0_path = mu0FileArg.getValue();
-    const auto mu1_path = mu1FileArg.getValue();
+    const auto mu0_path = params["serialization"]["mu0_file"];
+    const auto mu1_path = params["serialization"]["mu1_file"];
     auto mu1 = vector<double>();
     auto mu0 = vector<double>();
     try {
@@ -76,23 +47,23 @@ int main(int argc, char** argv)
     }
 
     // 1.1 CMD verification
-    const auto delta = deltaArg.getValue();
-    const auto gamma = gammaArg.getValue();
+    const auto delta = float(params["hyperparameters"]["delta"]);
+    const auto gamma = float(params["hyperparameters"]["gamma"]);
     //if(delta < -1 || delta > 1)
     //    throw std::domain_error("Delta must belong to [-1,1]");
+    const auto bias = float(params["hyperparameters"]["bias"]);
+    const auto eta1 = float(params["hyperparameters"]["eta1"]);
+    const auto eta0 = float(params["hyperparameters"]["eta0"]);
+    const auto bar_eta1 = float(params["hyperparameters"]["bar_eta1"]);
+    const auto bar_eta0 = float(params["hyperparameters"]["bar_eta0"]);
+    const auto l1 = int(params["hyperparameters"]["l1"]);
+    const auto l0 = int(params["hyperparameters"]["l0"]);
 
-    const auto eta1 = eta1Arg.getValue();
-    const auto eta0 = eta0Arg.getValue();
-    const auto bar_eta1 = bar_eta1Arg.getValue();
-    const auto bar_eta0 = bar_eta0Arg.getValue();
+    const auto casebase_file = params["input"]["casebase"];
+    const auto outcomes_file = params["input"]["outcomes"];
+    const auto features_file = params["input"]["features"];
 
-    const auto l1 = l1Arg.getValue();
-    const auto l0 = l0Arg.getValue();
-
-    const auto casebase_file = cbFileArg.getValue();
-    const auto outcomes_file = oFileArg.getValue();
-    const auto features_file = fFileArg.getValue();
-
+    std::cerr << "# Loading the instance files..." << std::endl;
 
     auto cases = vector<vector<int>>();
     auto outcomes = vector<bool>();
@@ -113,17 +84,18 @@ int main(int argc, char** argv)
         return 3;
     }
 
-    auto max_learning_iterations = pArg.getValue();
-    auto online = iArg.getValue();
-    auto verbose = vArg.getValue();
-    auto starting_case = nArg.getValue(); // TODO: Test validity
-    std::cerr << "STARTING" << starting_case << " " << outcomes[starting_case] << std::endl;
-    auto sample_out = sArg.getValue();
-    auto keep_offset = kArg.getValue();
-    auto limit_examples = lArg.getValue() + starting_case;
-    auto run_id = runArg.getValue();
-    auto check_if_in_cb = hArg.getValue();
-    auto no_pred = predArg.getValue();
+    std::cerr << "# Setting the parameters..." << std::endl;
+
+    auto max_learning_iterations = int(params["parameters"]["training_iterations"]);
+    auto online = bool(params["parameters"]["online"]);
+    auto verbose = int(params["output"]["verbose"]);
+    auto starting_case = int(params["parameters"]["starting_case"]);
+    auto sample_out =  bool(params["parameters"]["sample_out"]);
+    auto keep_offset = bool(params["parameters"]["keep_offset"]);
+    auto limit_examples = int(params["parameters"]["limit"]) + starting_case;
+    auto run_id = params["parameters"]["run_id"];
+    auto check_if_in_cb = bool(params["parameters"]["heuristic"]);
+    auto no_pred = bool(params["parameters"]["no_prediction"]);
     if(limit_examples > size(cases)) {
         cout << "# The limit is larger than the cases in the casebase. It will be set to the casebase size." << endl;
         limit_examples = size(cases);
@@ -134,6 +106,8 @@ int main(int argc, char** argv)
     if(sample_out && limit_examples == size(cases)) {
         cout << "# Disable the Sample Out feature due to the limit parameter being as large as the casebase." << endl;
     }
+
+    std::cerr << "# Initialize..." << std::endl;
 
     // 1.2 Number of features detection
     auto n_cases = size(cases);
@@ -317,15 +291,15 @@ int main(int argc, char** argv)
     // 3. Initialize the random generator
     std::random_device rnd_device;
     std::mt19937 gen(rnd_device());
-    auto seed = seedArg.getValue();
+    auto seed = params["parameters"]["seed"];
     if(seed == 0)
         seed = std::time(0);
     std::srand(seed);
 
     auto indexes = vector<int>(size(cases));
     std::iota(begin(indexes), end(indexes), 0);
-
-    if(rArg.getValue()) {
+    auto shuffle = bool(params["parameters"]["shuffle"]);
+    if(shuffle) {
         cerr << "# Shuffle the casebase..." << endl;
         std::random_shuffle(begin(indexes), end(indexes));
     }

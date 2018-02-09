@@ -518,6 +518,10 @@ public:
         return res;
     }
 
+    auto serialize(std::string path) {
+
+    }
+
     void display() {
         std::fstream fs;
         fs.open("casebase.log", std::fstream::in | std::fstream::out | std::fstream::app);

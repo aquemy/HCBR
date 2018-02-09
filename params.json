@@ -1,40 +1,41 @@
 {
     "input": {
-        "casebase":"",
-        "outcomes":"",
-        "features":""
+        "casebase":"../data/splice_casebase.txt",
+        "outcomes":"../data/splice_outcomes.txt",
+        "features":"../"
     },
     "output": {
         "verbose": 0
     },
     "parameters": {
-        "run_number": 0,
+        "run_id": 0,
         "seed": -1,
-        "limit": 1223,
-        "sample-out": 1,
-        "heuristic": 1,
-        "keep-offset":1,
-        "shuffle": 0,
-        "online": 1,
+        "limit": 2857,
+        "sample_out": true,
+        "heuristic": true,
+        "keep_offset": true,
+        "shuffle": false,
+        "online": true,
         "training_iterations": 1,
-        "no-prediction": 0
+        "no_prediction": false,
+        "starting_case": 0
     },
     "hyperparameters":{
-        "bias": 0,
-        "eta1": 0,
-        "eta0": 0,
-        "bar_eta0": 0,
-        "bar_eta1": 0,
+        "bias": 0.0,
+        "eta1": 0.0,
+        "eta0": 0.0,
+        "bar_eta0": 0.0,
+        "bar_eta1": 0.0,
         "l1": 0,
         "l0": 1,
-        "delta": 0,
-        "gamma": 0
+        "delta": 0.0,
+        "gamma": 0.0
     },
     "serialization": {
-        "serialize": 1,
+        "serialize": true,
         "weight_file": "W.txt",
         "mu0_file": "mu0.txt",
         "mu1_file": "mu1.txt",
-        "append_run_number": 0
-    },
+        "append_run_number": false
+    }
 }
