@@ -49,6 +49,7 @@ set(FILES
 
 #add_executable(hcbr src/sequence.cpp ${FILES})
 add_executable(hcbr_learning src/learning_sequence.cpp ${FILES})
+target_link_libraries(hcbr_learning -lstdc++fs)
 
 ######################################################################################
 ### 3) Include Tests

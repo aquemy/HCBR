@@ -6,6 +6,9 @@
 
 #include <json.hpp>
 
+#ifndef HCBR_UTILS_HPP
+#define HCBR_UTILS_HPP
+
 ////////////////////////////////////////////////////////////
 /// \brief Parse and validate json parameters
 ///
@@ -34,9 +37,11 @@ nlohmann::json load_and_validate_parameters(std::string param_file_path) {
 template <typename T>
 std::ostream& operator<< (std::ostream& out, const std::vector<T>& v) {
   if ( !v.empty() ) {
-    out << '[';
-    std::copy(std::begin(v), std::end(v), std::ostream_iterator<T>(out, ", "));
-    out << "\b\b]";
+    //out << '[';
+    std::copy(std::begin(v), std::end(v), std::ostream_iterator<T>(out, " "));
+    //out << "\b\b]";
   }
   return out;
 }
+
+#endif

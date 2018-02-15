@@ -4,6 +4,9 @@
 #include <vector>
 #include <sstream>
 
+#ifndef HCBR_IO_HPP
+#define HCBR_IO_HPP
+
 ////////////////////////////////////////////////////////////
 /// \brief Helper to transform a line into a case description
 ///
@@ -45,13 +48,13 @@ std::vector<std::vector<int>> read_case_base(std::string path) {
 ///
 /// \return The outcomes
 ////////////////////////////////////////////////////////////
-std::vector<bool> read_mapping(std::string path) {
+std::vector<int> read_mapping(std::string path) {
     std::ifstream file(path);
-    std::vector<bool> v;
+    std::vector<int> v;
     std::string line;
     if (file) {
         while (std::getline(file, line)) {
-            v.push_back(bool(std::stoi(line)));
+            v.push_back(std::stoi(line));
         }
     }
     return v;
@@ -80,7 +83,6 @@ std::map<int, std::string> read_features(std::string path) {
             iss >> c;
             iss >> v;
             f[i] = c + "=" + v;
-            //std::cout << i << " " <<  c + "=" + v << std::endl;
         }
     }
     return f;
@@ -104,3 +106,5 @@ std::vector<double> read_vector(std::string path) {
     }
     return v;
 }
+
+#endif

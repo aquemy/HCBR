@@ -8,6 +8,19 @@ from collections import Counter
 import math
 import random
 
+
+
+def neighbors(W, i):
+    n = []
+    for k, e in enumerate(W[i]):
+        if e > 0:
+            for j in range(len(W)):
+                if j != k and W[j][k] > 0:
+                    n.append(W[j][k])
+                else:
+                    n.append(0)
+    return n
+
 def accuracy(decision_vector):
     ok = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['TP', 'TN']])
     return  float(ok) / len(decision_vector)
@@ -113,10 +126,22 @@ def label_to_color(l):
         return 'xkcd:light red'
 
 
-def calculate_decision_vector(predictor, mu1, mu0, weights, J):
+def calculate_decision_vector_(predictor, mu1, mu0, weights, J):
     #delta_mu = mu1.subtract(mu0)
     S1 = np.matmul(weights, mu1)
     S0 = np.matmul(weights, mu0) 
+    S = S1 - S0
+    D = predictor(S)
+    #for i, s1 in enumerate(S1):
+    #    print('{} - {} = {} | P : {} | {} | {}'.format(s1, S0[i], S[i], D[i], i, J[i]))
+    return D, S, S0, S1
+
+def calculate_decision_vector(predictor, mu1, mu0, W, J, W2):
+    #delta_mu = mu1.subtract(mu0)
+    S1 = np.matmul(W, mu1)
+    S0 = np.matmul(W, mu0)
+    S1 += np.matmul(W2, mu1)
+    S0 += np.matmul(W2, mu0) 
     S = S1 - S0
     D = predictor(S)
     #for i, s1 in enumerate(S1):
@@ -278,7 +303,7 @@ def main(args):
     print('# INITIALIZATION')
     #mu0 /= np.linalg.norm(mu0, ord=1)
     #mu1 /= np.linalg.norm(mu1, ord=1)
-    D, S, S0, S1 = calculate_decision_vector(predictor, mu1, mu0, weights, J)
+    D, S, S0, S1 = calculate_decision_vector_(predictor, mu1, mu0, weights, J)
     #print(S0)
     #print(S1)
     #@print(S)
@@ -291,6 +316,25 @@ def main(args):
     print(accuracy(decision_vector))
     plot(decision_vector, S, S0, S1, args, windows_id=100)
 
+    W2 = []
+    for i, w in enumerate(weights):
+        print("{}/{}".format(i, len(weights)))
+        W2.append(neighbors(weights, i))
+    W2 = np.array(W2)
+    print(W2)
+    D, S, S0, S1 = calculate_decision_vector(predictor, mu1, mu0, weights, J, W2)
+    #print(S0)
+    #print(S1)
+    #@print(S)
+    #S /= np.linalg.norm(S, ord=1)
+    OS = S
+    OD = D
+    decision_vector = np.column_stack((D,J,S,OS,OD))
+    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
+    print(confusion_matrix)
+    print(accuracy(decision_vector))
+    plot(decision_vector, S, S0, S1, args, windows_id=100)
+        #print(len(neighbors(weights, 0)), len(weights))
     #print(np.column_stack((D, hcbr_traiing_pred, S)))
 
     '''
@@ -311,7 +355,7 @@ def main(args):
     '''
     UPDATE CONFIDENCE
     '''
-    #'''
+    '''
     print('# UPDATE CONFIDENCE')
     #mu0, mu1 = adjust_intrinsic_strength_full_loop(S, J, D, mu0, mu1, weights, k_max=1)
     mu0, mu1 = adjust_intrinsic_strength(S, J, D, mu0, mu1, weights, k_max=2)
@@ -321,11 +365,11 @@ def main(args):
     print(confusion_matrix)
     print(accuracy(decision_vector))
     plot(decision_vector, S, S0, S1, args, windows_id=100 * 100)
-    #'''
+    '''
     '''
     SEPARATION PHASE
     '''
-    print('# SEPARATE')
+    #print('# SEPARATE')
     '''
     k = 1
     for i in range(k):

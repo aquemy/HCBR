@@ -5,7 +5,9 @@
 #include <map>
 #include <set>
 #include <tuple>
-//#include <utils.cpp>
+
+#include <utils.cpp>
+#include <io.cpp>
 
 auto log_file_name(std::string file, int id, std::string ext="csv") {
     if(id < 0)
@@ -208,6 +210,10 @@ public:
 
         c_to_e_overlap[0] = std::map<int, std::map<int, double>>();
         c_to_e_overlap[1] = std::map<int, std::map<int, double>>();
+    }
+
+    CaseBase(std::string path) {
+        deserialize(path);
     }
 
     ////////////////////////////////////////////////////////////
@@ -518,8 +524,233 @@ public:
         return res;
     }
 
-    auto serialize(std::string path) {
+    void deserialize(std::string path) {
+        // Reading cases
+        cases = read_case_base(path + "/training_set_cases.txt");
+        intersection_family = read_case_base(path + "/partition.txt");
+        outcomes = read_mapping(path + "/training_set_outcomes.txt");
 
+        deserialize_intrinsic_strength(path + "/Mu_0.txt", path + "/Mu_1.txt");
+        deserialize_f_to_e(path + "/features_to_partition.txt");
+        deserialize_e_to_c(path + "/partition_to_cases.txt");
+        deserialize_c_to_e(path + "/cases_to_partition.txt");
+        deserialize_e_to_c_by_o(path + "/partition_to_case_class_0.txt", 0);
+        deserialize_e_to_c_by_o(path + "/partition_to_case_class_1.txt", 1);
+        deserialize_e_to_outcome(path + "/partition_to_outcomes.txt");
+        deserialize_e_to_outcome_count(path + "/partition_to_outcomes_count.txt");
+    }
+
+    void deserialize_intrinsic_strength(std::string mu0_path, std::string mu1_path) {
+        auto raw_mu0 = read_vector(mu0_path);
+        auto raw_mu1 = read_vector(mu1_path);
+        e_intrinsic_strength = std::map<int, std::map<int, double>>();
+        for(auto i = 0; i < std::size(raw_mu0); ++i) {
+            e_intrinsic_strength[0][i] = raw_mu0[i];
+            e_intrinsic_strength[1][i] = raw_mu1[i];
+        }
+    }
+
+    void deserialize_f_to_e(std::string path) {
+        auto raw_f_to_e = read_case_base(path);
+
+        f_to_e = std::map<int, int>();
+        for(auto e: raw_f_to_e)
+            f_to_e[e[0]] = e[1];
+    }
+
+    void deserialize_e_to_c(std::string path) {
+        auto raw_e_to_c = read_case_base(path);
+
+        e_to_c = std::map<int, std::vector<int>>();
+        for(auto e: raw_e_to_c) {
+            auto i = e[0];
+            e.erase(e.begin());
+            e_to_c[i] = e;
+        }
+    }
+
+    void deserialize_c_to_e(std::string path) {
+        auto raw_c_to_e = read_case_base(path);
+
+        c_to_e = std::map<int, std::vector<int>>();
+        for(auto e: raw_c_to_e) {
+            auto i = e[0];
+            e.erase(e.begin());
+            c_to_e[i] = e;
+        }
+    }
+
+    void deserialize_e_to_outcome(std::string path) {
+        auto raw_e_to_outcome = read_case_base(path);
+
+        e_to_outcome = std::map<int, std::vector<int>>();
+        for(auto e: raw_e_to_outcome) {
+            auto i = e[0];
+            e.erase(e.begin());
+            e_to_outcome[i] = e;
+        }
+    }
+
+    void deserialize_e_to_outcome_count(std::string path) {
+        auto raw_e_to_outcome_count = read_case_base(path);
+
+        e_to_outcome_count = std::map<int, std::vector<int>>();
+        for(auto e: raw_e_to_outcome_count) {
+            auto i = e[0];
+            e.erase(e.begin());
+            e_to_outcome_count[i] = e;
+        }
+    }
+
+    void deserialize_e_to_c_by_o(std::string path, int c) {
+        auto raw_e_to_c_by_o = read_case_base(path);
+
+        e_to_c_by_o = std::map<int, std::map<int, std::vector<int>>>();
+        for(auto e: raw_e_to_c_by_o) {
+            auto i = e[0];
+            e.erase(e.begin());
+            e_to_c_by_o[i][c] = e;
+        }
+    }
+
+    auto serialize(std::string path) {
+        // TODO: Check that path exists
+        serialize_strength(path + "/Mu_0.txt", path + "/Mu_1.txt");
+        serialize_weights(path + "/W.txt");
+        
+        serialize_casebase(path);
+        return 0;
+    }
+
+    int serialize_casebase(std::string path) {
+        serialize_intersection_family(path + "/partition.txt");
+        serialize_cases(path + "/training_set_cases.txt");
+        serialize_outcomes(path + "/training_set_outcomes.txt");
+        serialize_f_to_e(path + "/features_to_partition.txt");
+        serialize_e_to_c(path + "/partition_to_cases.txt");
+        serialize_c_to_e(path + "/cases_to_partition.txt");
+
+        serialize_e_to_c_by_o(path + "/partition_to_case_class_0.txt", 0);
+        serialize_e_to_c_by_o(path + "/partition_to_case_class_1.txt", 1);
+
+        serialize_e_to_outcome(path + "/partition_to_outcomes.txt");
+        serialize_e_to_outcome_count(path + "/partition_to_outcomes_count.txt");
+
+        return 0;
+    }
+
+    void serialize_strength(std::string path_mu0, std::string path_mu1) {
+        std::ofstream mu_outfile;
+        mu_outfile.open(path_mu0, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_intrinsic_strength[0]) {
+            mu_outfile << std::setprecision(15) << e.second << std::endl;
+        }
+        mu_outfile.close();
+        mu_outfile.open(path_mu1, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_intrinsic_strength[1]) {
+            mu_outfile << std::setprecision(15) << e.second << std::endl;
+        }
+        mu_outfile.close();
+    }
+
+    void serialize_weights(std::string path) {
+        std::ofstream w_outfile;
+        w_outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto i = 0; i < std::size(cases); ++i) {
+            auto c = cases[i];
+            auto n = std::size(c);
+            auto k_ = 0;
+            for(auto k = 0; k < std::size(intersection_family); ++k) {
+                if(std::find(std::begin(c_to_e[i]), std::end(c_to_e[i]), k) != std::end(c_to_e[i])) {
+                    w_outfile << std::setprecision(15) << std::size(intersection_family[k]) / double(n) << " ";
+                }
+                else
+                    w_outfile << "0 ";
+            }
+            w_outfile << std::endl;
+        }
+        w_outfile.close();
+    }
+
+    void serialize_intersection_family(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: intersection_family) {
+            outfile << std::setprecision(15) << e << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_cases(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: cases) {
+            outfile << e << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_outcomes(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: outcomes) {
+            outfile << e << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_f_to_e(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto f: f_to_e) {
+            outfile << std::setprecision(15) << f.first << " " << f.second << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_e_to_c(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_to_c) {
+            outfile << std::setprecision(15) << e.first << " " << e.second << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_c_to_e(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: c_to_e) {
+            outfile << std::setprecision(15) << e.first << " " << e.second << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_e_to_c_by_o(std::string path, int c) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_to_c_by_o) {
+            outfile << std::setprecision(15) << e.first << " " << e.second[c] << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_e_to_outcome(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_to_outcome) {
+            outfile << std::setprecision(15) << e.first << " " << e.second << std::endl;
+        }
+        outfile.close();
+    }
+
+    void serialize_e_to_outcome_count(std::string path) {
+        std::ofstream outfile;
+        outfile.open(path, std::ofstream::out | std::ofstream::trunc);
+        for(auto e: e_to_outcome_count) {
+            outfile << std::setprecision(15) << e.first << " " << e.second << std::endl;
+        }
+        outfile.close();
     }
 
     void display() {

@@ -10,6 +10,7 @@
 #include <casebase.cpp>
 #include <io.cpp>
 #include <utils.cpp>
+#include <experimental/filesystem>
 
 int main(int argc, char** argv)
 {
@@ -20,6 +21,7 @@ int main(int argc, char** argv)
     using std::string;
     using std::vector;
     using json = nlohmann::json;
+    namespace  fs = std::experimental::filesystem;
 
     TCLAP::CmdLine cmd("Hypergraph Case-Base Reasoner", ' ', "0.0.1");
     TCLAP::ValueArg<string> param_file_arg("", "params","JSON parameter file (c.f. documentation for examples)", false, "./params.json", "string", cmd);
@@ -32,6 +34,22 @@ int main(int argc, char** argv)
     auto params = load_and_validate_parameters(param_file_path);
 
     // 1. DATA
+    const auto deserialize = params["deserialization"]["deserialize"];
+    const std::string deserialize_path = params["deserialization"]["path"];
+    fs::path deserialize_p(deserialize_path);
+    if (deserialize and not fs::exists(deserialize_p)) {
+        cerr << "Deserialization path does not exist." << endl;
+        return 3;
+    }
+
+    const auto serialize = params["serialization"]["serialize"];
+    const std::string serialize_path = params["serialization"]["path"];
+
+    fs::path serialize_p(serialize_path);
+    if (serialize and not fs::exists(serialize_p)) {
+        fs::create_directories(serialize_path);
+    }
+
     const auto mu0_path = params["serialization"]["mu0_file"];
     const auto mu1_path = params["serialization"]["mu1_file"];
     auto mu1 = vector<double>();
@@ -66,7 +84,7 @@ int main(int argc, char** argv)
     std::cerr << "# Loading the instance files..." << std::endl;
 
     auto cases = vector<vector<int>>();
-    auto outcomes = vector<bool>();
+    auto outcomes = vector<int>();
     auto features = std::map<int, string>();
     try {
         cases = read_case_base(casebase_file);
@@ -133,13 +151,11 @@ int main(int argc, char** argv)
 
 
     // 2. Create the necessary variables
-    auto cb = CaseBase(size(feature_map), n_cases);
-
     auto avr_good = 0.;
     auto total_time = 0.;
     auto nc = cases[0];
     auto o = outcomes[0];
-    decltype(cb.projection(cases[0])) proj;
+    std::pair<std::map<int, std::vector<int>>, std::vector<int>> proj;
     auto prediction = 0;
     auto pred_0 = 0.;
     auto pred_1 = 0.;
@@ -304,44 +320,39 @@ int main(int argc, char** argv)
         std::random_shuffle(begin(indexes), end(indexes));
     }
 
+    auto cb = CaseBase(size(feature_map), n_cases);
+    if(deserialize) {
+        cerr << "# Model deserialization..." << endl;
+        cb = CaseBase(deserialize_path);
+    }
+
     auto start_global_time = std::chrono::steady_clock::now();
-    cerr << "# Add cases..." << starting_case << endl;
     auto start_time = std::chrono::steady_clock::now();
-    for(auto i = starting_case; i < limit_examples; ++i) {
-        //std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << std::endl;
-        o = outcomes[indexes[i]];
-        nc = cases[indexes[i]];
-        cb.add_case(nc, o, false);//online);
+    if(not deserialize) {
+        cerr << "# Add cases..." << endl;
+        for(auto i = starting_case; i < limit_examples; ++i) {
+            //std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << std::endl;
+            o = outcomes[indexes[i]];
+            nc = cases[indexes[i]];
+            cb.add_case(nc, o, false);//online);
+        }
     }
     auto end_time = std::chrono::steady_clock::now();
     auto diff = end_time - start_time;
     auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
 
-    // SAVE THE HYPERGRAPH REPRESENTATION
-    // MATRICE W
-    std::cerr << "Saving [" << limit_examples-starting_case << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
-    std::ofstream w_outfile;
-    w_outfile.open("W.txt", std::ofstream::out | std::ofstream::trunc);
-    for(auto i = starting_case; i < limit_examples; ++i) {
-        auto c = cases[indexes[i]];
-        auto n = std::size(c);
-        auto k_ = 0;
-        for(auto k = 0; k < std::size(cb.intersection_family); ++k) {
-            if(std::find(std::begin(cb.c_to_e[i]), std::end(cb.c_to_e[i]), k) != std::end(cb.c_to_e[i])) {
-                w_outfile << std::setprecision(15) << std::size(cb.intersection_family[k]) / double(n) << " ";
-            }
-            else
-                w_outfile << "0 ";
-        }
-        w_outfile << std::endl;
+    if (serialize) {
+        cerr << "# Model serialization..." << endl;
+        cb.serialize_casebase(serialize_path);
+        //std::cerr << "# Saving the [" << limit_examples-starting_case << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
+        //cb.serialize_weights("W.txt");
     }
-    w_outfile.close();
-    // END SAVE THE HYPERGRAPH REPRESENTATION
 
     auto min_size_e = size(cb.intersection_family[0]);
     auto max_size_e = min_size_e;
     auto average_size_e = 0.;
     auto cardinal_part = size(cb.intersection_family);
+
     for(const auto& e: cb.intersection_family) {
         auto n = size(e);
         average_size_e += n;
@@ -436,6 +447,7 @@ int main(int argc, char** argv)
         if(max_size_ec < n)
             max_size_ec = n;
     }
+
     log_run += std::to_string(time) + " , " 
               + std::to_string(limit_examples - starting_case) + " , "
               + std::to_string(size(cb.f_to_e)) + " , "
@@ -462,13 +474,7 @@ int main(int argc, char** argv)
 
 
     cerr << "# Calculate intrinsic strength..." << endl;
-    if (std::size(mu1) == std::size(mu0) and std::size(mu1) > 0) {
-        cerr << "# Restoring instrinc strength" << endl;
-        for(auto i = 0; i < std::size(mu0); ++i) {
-            cb.e_intrinsic_strength[0][i] = mu0[i];
-            cb.e_intrinsic_strength[1][i] = mu1[i];
-        }
-    } else {
+    if (not deserialize) {
         start_time = std::chrono::steady_clock::now();
         cb.calculate_strength(log, run_id);
         end_time = std::chrono::steady_clock::now();
@@ -476,21 +482,12 @@ int main(int argc, char** argv)
         time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
         log_run += std::to_string(time) + " , ";
     }
-    // SAVE THE HYPERGRAPH REPRESENTATION
-    // VECTOR MU
-    std::ofstream mu_outfile;
-    mu_outfile.open("Mu_0.txt", std::ofstream::out | std::ofstream::trunc);
-    for(auto e: cb.e_intrinsic_strength[0]) {
-        mu_outfile << std::setprecision(15) << e.second << std::endl;
-    }
-    mu_outfile.close();
-    mu_outfile.open("Mu_1.txt", std::ofstream::out | std::ofstream::trunc);
-    for(auto e: cb.e_intrinsic_strength[1]) {
-        mu_outfile << std::setprecision(15) << e.second << std::endl;
-    }
-    mu_outfile.close();
-    // END SAVE THE HYPERGRAPH REPRESENTATION
 
+    if (serialize) {
+        cerr << "Serialization of pre-training strength vectors..." << endl;
+        cb.serialize_strength(serialize_path + "Mu_0_pre_training.txt", serialize_path + "Mu_1_pre_training.txt");
+        cb.serialize_strength(serialize_path + "Mu_0.txt", serialize_path + "Mu_1.txt");
+    }
 
     cerr << "# Learning phase..." << endl;
     auto offset_0 = 0.;
@@ -546,13 +543,6 @@ int main(int argc, char** argv)
             nc = cases[indexes[i]];
             proj = cb.projection(nc);
             rdf = std::size(proj.second) / double(std::size(nc));
-           
-           /*
-            decltype(nc) v(size(nc)+size(proj.second));
-            decltype(v)::iterator it;
-            it = std::set_difference(begin(nc), end(nc), begin(proj.second), end(proj.second), begin(v));
-            v.resize(it-begin(v));
-            */
 
             auto non_disc_features = double(std::size(nc)); //int(size(v));
             pred_0 = 0.;
@@ -705,19 +695,11 @@ int main(int argc, char** argv)
               + std::to_string(fn) + " , "
               + std::to_string(tn) + " , ";
 
+    if (serialize) {
+        cerr << "Serialization of post-training strength vectors..." << endl;
+        cb.serialize_strength(serialize_path + "Mu_0_post_training.txt", serialize_path + "Mu_1_post_training.txt");
+    }
 
-    //std::ofstream mu_outfile;
-    mu_outfile.open("Mu_0_post_training.txt", std::ofstream::out | std::ofstream::trunc);
-    for(auto e: cb.e_intrinsic_strength[0]) {
-        mu_outfile << std::setprecision(15) << e.second << std::endl;
-    }
-    mu_outfile.close();
-    mu_outfile.open("Mu_1_post_training.txt", std::ofstream::out | std::ofstream::trunc);
-    for(auto e: cb.e_intrinsic_strength[1]) {
-        mu_outfile << std::setprecision(15) << e.second << std::endl;
-    }
-    mu_outfile.close();
-    
     auto j = 0;
     // Reset for prediction
     avg_diff_bad_0 = 0.;
