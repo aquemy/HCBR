@@ -103,7 +103,6 @@ int main(int argc, char** argv)
     }
 
     std::cerr << "# Setting the parameters..." << std::endl;
-
     auto max_learning_iterations = int(params["parameters"]["training_iterations"]);
     auto online = bool(params["parameters"]["online"]);
     auto verbose = int(params["output"]["verbose"]);
@@ -148,7 +147,6 @@ int main(int argc, char** argv)
     cerr << "# Minimum case size: " << size(*min_e) << endl;
     cerr << "# Maximum case size: " << size(*max_e) << endl;
     cerr << "# Average case size: " << avg_features << endl;
-
 
     // 2. Create the necessary variables
     auto avr_good = 0.;
@@ -331,7 +329,6 @@ int main(int argc, char** argv)
     if(not deserialize) {
         cerr << "# Add cases..." << endl;
         for(auto i = starting_case; i < limit_examples; ++i) {
-            //std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << std::endl;
             o = outcomes[indexes[i]];
             nc = cases[indexes[i]];
             cb.add_case(nc, o, false);//online);
@@ -344,8 +341,8 @@ int main(int argc, char** argv)
     if (serialize) {
         cerr << "# Model serialization..." << endl;
         cb.serialize_casebase(serialize_path);
-        //std::cerr << "# Saving the [" << limit_examples-starting_case << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
-        //cb.serialize_weights("W.txt");
+        std::cerr << "# Saving the [" << limit_examples-starting_case << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
+        cb.serialize_weights("W.txt");
     }
 
     auto min_size_e = size(cb.intersection_family[0]);
@@ -553,7 +550,7 @@ int main(int argc, char** argv)
                 pred_1 += r * cb.e_intrinsic_strength[1][k.first];
             }
             pred = normalize_prediction(pred_0, pred_1, 0, 0, 0);// eta, delta, offset_0, offset_1);// avg_diff_bad_0 / (i+1), avg_diff_bad_1 / (i+1));
-            prediction = prediction_rule(pred, rdf, 0, 0, 0, 0, 0, 0, 1, bias, gen);// gamma, eta, gen);
+            prediction = prediction_rule(pred, rdf, 0, 0, 0, 0, 0, 0, 1, 0, gen);// gamma, eta, gen);
             if(iter == -1 or iter >= max_learning_iterations) {
                 //cerr << pred_1 << " - " << pred_0 << " = " << pred_1 - pred_0 << " | P : " << prediction << " | " << indexes[i] << " | " << o << endl;
             }
@@ -654,7 +651,7 @@ int main(int argc, char** argv)
         auto time = std::chrono::duration<double, std::ratio<1, 1>>(diff).count();
         offset_0 = 0;//-avg_diff_bad_0 / (limit_examples - starting_case + 1) * 1;//prev;
         offset_1 = 0;//avg_diff_bad_1 / (limit_examples - starting_case + 1) * 1;//(1. - prev);
-        cerr << "Ratio: " << (tp + tn) << "/" << (tp + tn + fn + fp) << " = " << (tp + tn) / double(tp + tn + fn + fp) << endl;
+        cerr << "Accuracy: " << (tp + tn) << "/" << (tp + tn + fn + fp) << " = " << (tp + tn) / double(tp + tn + fn + fp) << endl;
         cerr << "Average error toward 0: " << avg_diff_bad_0 / (limit_examples - starting_case + 1) << " (" << fn << ")" << endl;
         cerr << "Average error toward 1: " << avg_diff_bad_1 / (limit_examples - starting_case + 1) << " (" << fp << ")" << endl;
         cerr << "Prev: " << prev / (limit_examples - starting_case) << " (error: " << double(fn) / (limit_examples - starting_case) << ") Offset: " <<  offset_0 << " " << offset_1 << endl;
@@ -935,6 +932,18 @@ int main(int argc, char** argv)
         log.open(log_file_name("hcbr", -1), std::fstream::in | std::fstream::out | std::fstream::app);
         log << log_run << std::endl;
         log.close();
+
+        cerr << "Accuracy: " << (tp + tn) << "/" << (tp + tn + fn + fp) << " = " << (tp + tn) / double(tp + tn + fn + fp) << endl;
+        cerr << "Average error toward 0: " << avg_diff_bad_0 / (limit_examples - starting_case + 1) << " (" << fn << ")" << endl;
+        cerr << "Average error toward 1: " << avg_diff_bad_1 / (limit_examples - starting_case + 1) << " (" << fp << ")" << endl;
+        cerr << "Prev: " << prev / (limit_examples - starting_case) << " (error: " << double(fn) / (limit_examples - starting_case) << ") Offset: " <<  offset_0 << " " << offset_1 << endl;
+        cerr << "Ratio error 1 : " << double(fp) / (fn + fp) << endl;
+
+        cerr << "-----------------" << endl;
+        cerr << "- " << std::fixed << tp << " - " << fp << " - " << endl;
+        cerr << "-----------------" << endl;
+        cerr << "- " << std::fixed << fn << " - " << tn << " - " << endl;
+        cerr << "-----------------" << endl;
     }
     pred_outfile.close();
     end_time = std::chrono::steady_clock::now();
