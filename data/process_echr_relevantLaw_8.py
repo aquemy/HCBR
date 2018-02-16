@@ -60,7 +60,7 @@ def read_cases(path, sep=','):
 
 
 def main():
-    path = '../data/echr_dataset/Article3/ngrams_a8_relevantLaw.csv'
+    path = '../data/echr_dataset/Article8/ngrams_a8_relevantLaw.csv'
     #path = './echr_dataset/Article3/topics3.csv'
     file_name = path.split('/')[-1].split('.')[0]
     base_name = file_name.split('.')[0]

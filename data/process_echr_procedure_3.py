@@ -90,10 +90,6 @@ def main():
                 cases[i][j] = ''
     print('NEW WORDS: {}'.format(n2))
 
-    if (len(empty_case)):
-        print('[WARNING]: There are {} empty cases.'.format(len(empty_case)))
-        print('[WARNING]: The empty cases represents {} of the total casebase'.format(float(len(empty_case)) / len(cases)))
-
     outcome_file = '../data/echr_dataset/Article3/cases_a3.csv'
 
     except_features_no_outcomes = []
