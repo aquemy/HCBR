@@ -12,6 +12,15 @@
 #include <utils.cpp>
 #include <experimental/filesystem>
 
+template<class T, class U>
+T get_param(const U& p, T def) {
+    try {
+        return T(p);
+    } catch (...) {
+        return def;
+    } 
+}
+
 int main(int argc, char** argv)
 {
     using std::cerr;
@@ -69,7 +78,8 @@ int main(int argc, char** argv)
     const auto gamma = float(params["hyperparameters"]["gamma"]);
     //if(delta < -1 || delta > 1)
     //    throw std::domain_error("Delta must belong to [-1,1]");
-    const auto bias = float(params["hyperparameters"]["bias"]);
+    auto bias = float(params["hyperparameters"]["bias"]);
+    auto auto_bias = get_param<bool>(params["hyperparameters"]["auto_bias"], false);
     const auto eta1 = float(params["hyperparameters"]["eta1"]);
     const auto eta0 = float(params["hyperparameters"]["eta0"]);
     const auto bar_eta1 = float(params["hyperparameters"]["bar_eta1"]);
@@ -101,6 +111,9 @@ int main(int argc, char** argv)
         cerr << "Error: " << e.what() << endl;
         return 3;
     }
+
+    cerr << "# Perform sanity checks on the dataset" << endl;
+    data_sanity_check(cases, outcomes); // TODO: React on it
 
     std::cerr << "# Setting the parameters..." << std::endl;
     auto max_learning_iterations = int(params["parameters"]["training_iterations"]);
@@ -695,6 +708,14 @@ int main(int argc, char** argv)
     if (serialize) {
         cerr << "Serialization of post-training strength vectors..." << endl;
         cb.serialize_strength(serialize_path + "Mu_0_post_training.txt", serialize_path + "Mu_1_post_training.txt");
+    }
+
+    // Determine biais
+    if(auto_bias) {
+        cerr << "# Determine bias for optimal separation on training set..." << endl;
+        string cmd_bias = "python ../script/biais.py --weights ./W.txt --mu0 ./Mu_0_post_training.txt --mu1 ./Mu_1_post_training.txt --outcomes " + string(outcomes_file);
+        bias = stod(exec(cmd_bias.c_str()));
+        cerr << "Biais: " << bias << endl;
     }
 
     auto j = 0;
