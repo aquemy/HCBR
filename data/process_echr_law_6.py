@@ -98,6 +98,10 @@ def main():
         if s == 0:
             empty_case.append(i)
 
+    if (len(empty_case)):
+        print('[WARNING]: There are {} empty cases.'.format(len(empty_case)))
+        print('[WARNING]: The empty cases represents {} of the total casebase'.format(float(len(empty_case)) / len(cases)))
+
     outcome_file = '../data/echr_dataset/Article6/cases_a6.csv'
 
     except_features_no_outcomes = []

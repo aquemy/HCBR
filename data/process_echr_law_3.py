@@ -52,8 +52,7 @@ def read_cases(path, sep=','):
         for i, row in enumerate(reader):
             d = row.split(sep)
             d = map(str.strip, d)
-            #d = [e for e in d if e != '0.000000000000000000e+00']
-            #print(len(d))
+            d = [e for e in d if e != '0.000000000000000000e+00']
             cases.append(d)
 
     return cases
@@ -90,6 +89,7 @@ def main():
                 cases[i][j] = ''
     print('NEW WORDS: {}'.format(n2))
     empty_case = []
+    empty_outcomes = []
     for i, case in enumerate(cases):
         s = 0
         for f in case:
@@ -98,6 +98,9 @@ def main():
         if s == 0:
             empty_case.append(i)
 
+    if (len(empty_case)):
+        print('[WARNING]: There are {} empty cases.'.format(len(empty_case)))
+        print('[WARNING]: The empty cases represents {} of the total casebase'.format(float(len(empty_case)) / len(cases)))
 
 
     outcome_file = '../data/echr_dataset/Article3/cases_a3.csv'
