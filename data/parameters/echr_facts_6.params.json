@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/echr_procedure_8_casebase.txt",
-        "outcomes":"../data/echr_procedure_8_outcomes.txt",
+        "casebase":"../data/echr_facts_6_casebase.txt",
+        "outcomes":"../data/echr_facts_6_outcomes.txt",
         "features":"../"
     },
     "output": {

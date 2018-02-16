@@ -21,7 +21,7 @@
         "starting_case": 0
     },
     "hyperparameters":{
-        "auto_bias": true,
+        "auto_bias": false,
         "bias": 0.0,
         "eta1": 0.0,
         "eta0": 0.0,
