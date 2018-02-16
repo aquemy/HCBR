@@ -8,8 +8,6 @@ from collections import Counter
 import math
 import random
 
-
-
 def neighbors(W, i):
     n = []
     for k, e in enumerate(W[i]):
@@ -126,22 +124,10 @@ def label_to_color(l):
         return 'xkcd:light red'
 
 
-def calculate_decision_vector_(predictor, mu1, mu0, weights, J):
+def calculate_decision_vector(predictor, mu1, mu0, weights, J):
     #delta_mu = mu1.subtract(mu0)
     S1 = np.matmul(weights, mu1)
     S0 = np.matmul(weights, mu0) 
-    S = S1 - S0
-    D = predictor(S)
-    #for i, s1 in enumerate(S1):
-    #    print('{} - {} = {} | P : {} | {} | {}'.format(s1, S0[i], S[i], D[i], i, J[i]))
-    return D, S, S0, S1
-
-def calculate_decision_vector(predictor, mu1, mu0, W, J, W2):
-    #delta_mu = mu1.subtract(mu0)
-    S1 = np.matmul(W, mu1)
-    S0 = np.matmul(W, mu0)
-    S1 += np.matmul(W2, mu1)
-    S0 += np.matmul(W2, mu0) 
     S = S1 - S0
     D = predictor(S)
     #for i, s1 in enumerate(S1):
@@ -243,7 +229,7 @@ def update_weights(decision_vector, W, mu1, mu0):
 def plot(decision_vector, S, S0, S1, args, windows_id=100):
     fig = plt.figure(windows_id)
     
-    n_bins = 50
+    n_bins = 20
     
     #'''
     n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s) == 'TP'], n_bins, normed=0, facecolor='xkcd:royal blue', alpha=0.75)
@@ -265,7 +251,7 @@ def plot(decision_vector, S, S0, S1, args, windows_id=100):
     plt.xlabel('xlabel')
     plt.ylabel('ylabel')
 
-    plt.title(r'ACC={}'.format(accuracy(decision_vector)))
+    plt.title(r'accuracy={}'.format(accuracy(decision_vector)))
     plt.axis([min(S), max(S), -0.1, n_bins])
     plt.grid(True)
 
@@ -303,7 +289,7 @@ def main(args):
     print('# INITIALIZATION')
     #mu0 /= np.linalg.norm(mu0, ord=1)
     #mu1 /= np.linalg.norm(mu1, ord=1)
-    D, S, S0, S1 = calculate_decision_vector_(predictor, mu1, mu0, weights, J)
+    D, S, S0, S1 = calculate_decision_vector(predictor, mu1, mu0, weights, J)
     #print(S0)
     #print(S1)
     #@print(S)
@@ -315,32 +301,11 @@ def main(args):
     print(confusion_matrix)
     print(accuracy(decision_vector))
     plot(decision_vector, S, S0, S1, args, windows_id=100)
-
-    W2 = []
-    for i, w in enumerate(weights):
-        print("{}/{}".format(i, len(weights)))
-        W2.append(neighbors(weights, i))
-    W2 = np.array(W2)
-    print(W2)
-    D, S, S0, S1 = calculate_decision_vector(predictor, mu1, mu0, weights, J, W2)
-    #print(S0)
-    #print(S1)
-    #@print(S)
-    #S /= np.linalg.norm(S, ord=1)
-    OS = S
-    OD = D
-    decision_vector = np.column_stack((D,J,S,OS,OD))
-    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
-    print(confusion_matrix)
-    print(accuracy(decision_vector))
-    plot(decision_vector, S, S0, S1, args, windows_id=100)
-        #print(len(neighbors(weights, 0)), len(weights))
-    #print(np.column_stack((D, hcbr_traiing_pred, S)))
 
     '''
     BIAS AND OPTIMIZATION
     '''
-    '''
+    #'''
     bias = determine_bias(S, mu0, mu1, weights, J)
     print('BIAS: {}'.format(bias))
     dr_bias = functools.partial(decision_rule, bias=bias)
@@ -351,7 +316,7 @@ def main(args):
     print(confusion_matrix)
     print(accuracy(decision_vector))
     plot(decision_vector, S, S0, S1, args, windows_id=101)
-    '''
+    #'''
     '''
     UPDATE CONFIDENCE
     '''
