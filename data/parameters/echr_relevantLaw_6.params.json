@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/echr_law_3_casebase.txt",
-        "outcomes":"../data/echr_law_3_outcomes.txt",
+        "casebase":"../data/echr_relevantLaw_6_casebase.txt",
+        "outcomes":"../data/echr_relevantLaw_6_outcomes.txt",
         "features":"../"
     },
     "output": {
