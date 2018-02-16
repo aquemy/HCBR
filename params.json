@@ -9,14 +9,14 @@
     },
     "parameters": {
         "run_id": 0,
-        "seed": -1,
-        "limit": 2857,
+        "seed": 0,
+        "limit": 2000,
         "sample_out": true,
         "heuristic": true,
         "keep_offset": true,
         "shuffle": false,
         "online": true,
-        "training_iterations": 1,
+        "training_iterations": 2,
         "no_prediction": false,
         "starting_case": 0
     },
@@ -32,10 +32,18 @@
         "gamma": 0.0
     },
     "serialization": {
-        "serialize": true,
+        "serialize": false,
+        "path": "./",
         "weight_file": "W.txt",
         "mu0_file": "mu0.txt",
         "mu1_file": "mu1.txt",
         "append_run_number": false
+    },
+    "deserialization": {
+        "deserialize": false,
+        "level": "full",
+        "mu0_file": "Mu_0_post_training.txt",
+        "mu1_file": "Mu_1_post_training.txt",
+        "path": "./"
     }
 }
