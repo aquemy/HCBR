@@ -128,12 +128,7 @@ def main():
         examples = int(round(n * l))
         parameters_path = os.path.join(DATA_FOLDER, "parameters", "{}.params.json".format(instance_name))
         default_params = {
-                "learning_phases": 1,
-                "eta": 0.0,
-                "delta": 0.0,
-                "gamma": 0.0,
-                "heuristic": 1,
-                "online": 1
+                # TODO
             }
         parameters = None
         try:
@@ -207,6 +202,22 @@ def main():
                     print('[ERROR] Could not create output path for {}'.format(run_nb))
                     continue
             
+            # Modify the configuration for the run
+            parameters["input"]["casebase"] = fold_casebase
+            parameters["input"]["outcomes"] = fold_outcomes
+            parameters["parameters"]["limit"] = examples
+            parameters["parameters"]["run_id"] = i
+
+            fold_param_file = os.path.join(fold_output_path, 'params_{}.json'.format(run_nb))
+            with open(fold_param_file, 'w') as f:
+                f.write(json.dumps(parameters))
+
+            cmd = "{} --params {} > {} 2> {}".format(executable_path, 
+                    fold_param_file, 
+                    os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
+                    os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))
+                    )
+            '''
             cmd = "{} -c {} -o {} -l {} -s -p {} -e {} -d {} -g {} {} {} -b {} > {} 2> {}".format(
                     executable_path,
                     fold_casebase,
@@ -222,6 +233,7 @@ def main():
                     os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
                     os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))
                 )
+            '''
             print('#   CMD: {}'.format(cmd))
             rc = subprocess.call(cmd, shell=True)
             shutil.move("training.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "training.run_{}.log.csv".format(i)))
