@@ -1,0 +1,52 @@
+{
+    "input": {
+        "casebase":"../data/skin_casebase.txt",
+        "outcomes":"../data/skin_outcomes.txt",
+        "features":"../"
+    },
+    "output": {
+        "verbose": 0
+    },
+    "parameters": {
+        "run_id": 0,
+        "seed": 0,
+        "limit": 220551,
+        "sample_out": true,
+        "heuristic": true,
+        "keep_offset": true,
+        "shuffle": false,
+        "online": true,
+        "training_iterations": 1,
+        "no_prediction": false,
+        "starting_case": 0,
+        "models": 100,
+        "examples_per_model": 0.01,
+        "rule": "majority"
+    },
+    "hyperparameters":{
+        "bias": 0.0,
+        "eta1": 0.0,
+        "eta0": 0.0,
+        "bar_eta0": 0.0,
+        "bar_eta1": 0.0,
+        "l1": 0,
+        "l0": 1,
+        "delta": 0.0,
+        "gamma": 0.0
+    },
+    "serialization": {
+        "serialize": false,
+        "path": "./",
+        "weight_file": "W.txt",
+        "mu0_file": "mu0.txt",
+        "mu1_file": "mu1.txt",
+        "append_run_number": false
+    },
+    "deserialization": {
+        "deserialize": false,
+        "level": "full",
+        "mu0_file": "Mu_0_post_training.txt",
+        "mu1_file": "Mu_1_post_training.txt",
+        "path": "./"
+    }
+}
