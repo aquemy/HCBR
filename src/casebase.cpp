@@ -346,7 +346,6 @@ public:
         static std::random_device rnd_device;
         static std::mt19937 gen(rnd_device());
         //std::srand(std::time(0));
-        static bool calculated = false;
         if(!calculated)
         {
             std::cerr << "Calculate strength for " << std::size(cases) << std::endl;
@@ -361,7 +360,7 @@ public:
     }
 
     void calculate_strength(std::fstream& log, int run_id) {
-        static bool calculated = false;
+        //bool calculated = false;
         
         if(!calculated)
         {
@@ -912,7 +911,7 @@ private:
 
     int m;                                                      ///< Number of unique features
     int max_k;                                                  ///< Maximal number of cases (used for pre-allocation)
-    
+    bool calculated = false;
     
     std::map<int, std::vector<int>> f_to_c;                     ///< Mapping feature to cases
     

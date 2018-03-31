@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/splice_casebase.txt",
-        "outcomes":"../data/splice_outcomes.txt",
+        "casebase":"../data/skin_casebase.txt",
+        "outcomes":"../data/skin_outcomes.txt",
         "features":"../"
     },
     "output": {
@@ -10,13 +10,13 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 2000,
+        "limit": 220551,
         "sample_out": true,
         "heuristic": true,
         "keep_offset": true,
         "shuffle": false,
         "online": true,
-        "training_iterations": 2,
+        "training_iterations": 1,
         "no_prediction": false,
         "starting_case": 0
     },

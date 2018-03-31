@@ -51,6 +51,8 @@ set(FILES
 add_executable(hcbr_learning src/learning_sequence.cpp ${FILES})
 target_link_libraries(hcbr_learning -lstdc++fs)
 
+add_executable(ensemble src/ensemble.cpp ${FILES})
+target_link_libraries(ensemble -lstdc++fs)
 ######################################################################################
 ### 3) Include Tests
 ######################################################################################

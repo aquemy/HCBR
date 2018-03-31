@@ -25,24 +25,24 @@ INSTANCES = [
 
 #'''
 INSTANCES = [
-    ('echr_full_3', 1509757550)#None),#1509757550),
-    #('echr_full_6', None),
-    #('echr_full_8', None),
-    #('echr_procedure_3', None),
-    #('echr_procedure_6', None),
-    #('echr_procedure_8', None),
-    #('echr_circumstances_3', None),
-    #('echr_circumstances_6', None),
-    #('echr_circumstances_8', None),
-    #('echr_relevantLaw_3', None),
-    #('echr_relevantLaw_6', None),
-    #('echr_relevantLaw_8', None),
-    #('echr_facts_3', None),
-    #('echr_facts_6', None),
-    #('echr_facts_8', None),
-    #('echr_law_3', None),
-    #('echr_law_6', None),
-    #('echr_law_8', None)
+    ('echr_full_3', None),#None),#1509757550),
+    ('echr_full_6', None),
+    ('echr_full_8', None),
+    ('echr_procedure_3', None),
+    ('echr_procedure_6', None),
+    ('echr_procedure_8', None),
+    ('echr_circumstances_3', None),
+    ('echr_circumstances_6', None),
+    ('echr_circumstances_8', None),
+    ('echr_relevantLaw_3', None),
+    ('echr_relevantLaw_6', None),
+    ('echr_relevantLaw_8', None),
+    ('echr_facts_3', None),
+    ('echr_facts_6', None),
+    ('echr_facts_8', None),
+    ('echr_law_3', None),
+    ('echr_law_6', None),
+    ('echr_law_8', None)
 ]
 #'''
 '''
@@ -50,7 +50,33 @@ INSTANCES = [
     ('credo', None)
 ]
 '''
+'''
+INSTANCES = [
+    ('echr_full_3', 1509757550),
+    ('echr_law_3', 1510764127),
+    ('echr_procedure_3', 1509819902),
+    ('echr_relevantLaw_3', 1510841250),
+    ('echr_circumstances_3', 1511020246),
+    #('echr_topics_3', None),
+    #('echr_topics_circ_3', None),
 
+    ('echr_full_6', 1509846129),
+    ('echr_law_6', 1511038259),
+    ('echr_procedure_6', 1509943643),
+    ('echr_relevantLaw_6', 1510824274),
+    ('echr_circumstances_6', 1509889420),
+    #('echr_topics_6', None),
+    #('echr_topics_circ_6', None),
+
+    ('echr_full_8', 1510928265),
+    ('echr_law_8', 1509911215),
+    ('echr_procedure_8', 1510758528),
+    ('echr_relevantLaw_8', None),
+    ('echr_circumstances_8', None),
+    #('echr_topics_8', None),
+    #('echr_topics_circ_8', None)
+]
+'''
 def main():
     kfold = 10
     training_set_pct = 0.9

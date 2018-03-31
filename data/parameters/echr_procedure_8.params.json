@@ -16,7 +16,7 @@
         "keep_offset": true,
         "shuffle": false,
         "online": true,
-        "training_iterations": 100,
+        "training_iterations": 1,
         "no_prediction": false,
         "starting_case": 0
     },

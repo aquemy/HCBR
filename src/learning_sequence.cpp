@@ -550,7 +550,7 @@ int main(int argc, char** argv)
             //if(outcomes[indexes[i]] != cb.outcomes[indexes[i]])
             //    std::cerr << "Case i" << i << " | " << indexes[i] << " | " <<  outcomes[indexes[i]] << " -> " << cb.outcomes[indexes[i]] << std::endl;
             o = cb.outcomes[indexes[i]];//outcomes[indexes[i]];
-            nc = cases[indexes[i]];
+            nc = cb.cases[indexes[i]];
             proj = cb.projection(nc);
             rdf = std::size(proj.second) / double(std::size(nc));
 
