@@ -1,3 +1,10 @@
+import random
+import numpy as np
+from deap import base
+from deap import creator
+from deap import tools
+from deap import algorithms
+
 import argparse
 import pandas
 import os
@@ -22,6 +29,19 @@ def neighbors(W, i):
 def accuracy(decision_vector):
     ok = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['TP', 'TN']])
     return  float(ok) / len(decision_vector)
+
+def mcc(decision_vector):
+    tp = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['TP']])
+    tn = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['TN']])
+    fp = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['FP']])
+    fn = len([s[2] for s in decision_vector if confusion_matrix_label(s) in ['FN']])
+    den = 0
+    if (tp + fp) == 0 or (tp + fn) == 0 or (tn + fp) == 0 or (tn + fn) == 0:
+        den = 1
+    else:
+        den = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)
+        den = math.sqrt(den)
+    return ((tp*tn) - (fp * fn)) / den
 
 
 def determine_bias(S, mu0, mu1, weights, J, f=accuracy):
@@ -228,43 +248,24 @@ def update_weights(decision_vector, W, mu1, mu0):
     #np.linalg.norm(mu1 + d, ord=1)
     return mu1 + d / 2, mu0 - d / 2
 
+def calculate_fitness(predictor, mu1, mu0, weights, J, individual):
+    #print(mu1)
+    mu1_d = np.array(mu1)
+    mu0_d = np.array(mu0)
+    for i,_ in enumerate(mu1_d):
+        mu1_d[i] += individual[i] / 2.
+        mu0_d[i] -= individual[i] / 2.
+    #mu0_d /= np.linalg.norm(mu0_d, ord=1)
+    #mu1_d /= np.linalg.norm(mu1_d, ord=1)
+    D, S, S0, S1 = calculate_decision_vector(predictor, mu1_d, mu0_d, weights, J)
+    OS = S
+    OD = D
+    decision_vector = np.column_stack((D,J,S,OS,OD))
+    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
+    #fitness = accuracy(decision_vector) - 0.1 * np.linalg.norm(individual, ord=2)
+    fitness = mcc(decision_vector) - 0.1 * np.linalg.norm(individual, ord=2) ** 2
 
-def plot(decision_vector, S, S0, S1, args, windows_id=100):
-    fig = plt.figure(windows_id)
-    
-    n_bins = 20
-    
-    #'''
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s) == 'TP'], n_bins, normed=0, facecolor='xkcd:royal blue', alpha=0.75)
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s) == 'FP'], n_bins, normed=0, facecolor='xkcd:dark red', alpha=0.75)
-
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s) == 'TN'], n_bins, normed=0, facecolor='xkcd:cerulean', alpha=0.75)
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s) == 'FN'], n_bins, normed=0, facecolor='xkcd:light red', alpha=0.75)
-    #'''
-    '''
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s, 4) == 'TP'], n_bins, normed=0, facecolor='xkcd:royal blue', alpha=0.75)
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s, 4) == 'FP'], n_bins, normed=0, facecolor='xkcd:dark red', alpha=0.75)
-
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s, 4) == 'TN'], n_bins, normed=0, facecolor='xkcd:cerulean', alpha=0.75)
-    n, bins, patches = plt.hist([s[2] for s in decision_vector if confusion_matrix_label(s, 4) == 'FN'], n_bins, normed=0, facecolor='xkcd:light red', alpha=0.75)
-    '''
-    plt.axvline(x=args.eta1)
-    plt.axvline(x=args.eta0)
-
-    plt.xlabel('xlabel')
-    plt.ylabel('ylabel')
-
-    plt.title(r'accuracy={}'.format(accuracy(decision_vector)))
-    plt.axis([min(S), max(S), -0.1, n_bins])
-    plt.grid(True)
-
-    fig = plt.figure(windows_id + 10)
-    ax = fig.add_subplot(1, 1, 1)
-    relative_max_mu_val = np.array(map(relative_max_mu, np.column_stack((S1, S0))))
-    cf_label = np.array(map(confusion_matrix_label, decision_vector))
-    ax.scatter(S, relative_max_mu_val, color=np.array(map(label_to_color, cf_label)), s=1)
-
-
+    return fitness,
 
 def main(args):
 
@@ -287,9 +288,8 @@ def main(args):
     predictor = np.vectorize(dr_simple)
     predictor_opti = np.vectorize(dr_optimized)
 
-    '''
-    INITIALIZATION
-    '''
+    fitness_function = functools.partial(calculate_fitness, predictor, mu1, mu0, weights, J)
+
     print('# INITIALIZATION')
     #mu0 /= np.linalg.norm(mu0, ord=1)
     #mu1 /= np.linalg.norm(mu1, ord=1)
@@ -303,83 +303,79 @@ def main(args):
     decision_vector = np.column_stack((D,J,S,OS,OD))
     confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
     print(confusion_matrix)
-    print(accuracy(decision_vector))
-    plot(decision_vector, S, S0, S1, args, windows_id=100)
+    print('# Initial Accuracy: {}'.format(accuracy(decision_vector)))
+    print('# Initial MCC: {}'.format(mcc(decision_vector)))
 
-    '''
-    BIAS AND OPTIMIZATION
-    '''
-    '''
-    bias = determine_bias(S, mu0, mu1, weights, J)
-    print('BIAS: {}'.format(bias))
-    dr_bias = functools.partial(decision_rule, bias=bias)
-    predictor_bias = np.vectorize(dr_bias)
-    D, S, S0, S1 = calculate_decision_vector(predictor_bias, mu1, mu0, weights, J)
-    decision_vector = np.column_stack((D,J,S,OS,OD))
-    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
-    print(confusion_matrix)
-    print(accuracy(decision_vector))
-    plot(decision_vector, S, S0, S1, args, windows_id=101)
-    #'''
-    '''
-    UPDATE CONFIDENCE
-    '''
-    '''
-    print('# UPDATE CONFIDENCE')
-    #mu0, mu1 = adjust_intrinsic_strength_full_loop(S, J, D, mu0, mu1, weights, k_max=1)
-    mu0, mu1 = adjust_intrinsic_strength(S, J, D, mu0, mu1, weights, k_max=2)
-    D, S, S0, S1 = calculate_decision_vector(predictor, mu1, mu0, weights, J)
-    decision_vector = np.column_stack((D,J,S,OS,OD))
-    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
-    print(confusion_matrix)
-    print(accuracy(decision_vector))
-    plot(decision_vector, S, S0, S1, args, windows_id=100 * 100)
-    '''
-    '''
-    SEPARATION PHASE
-    '''
-    print('# SEPARATE')
-    #'''
-    k = 1
-    for i in range(k):
-        print('ITERATION {}'.format(i))
-        mu1, mu0 = update_weights(decision_vector, weights, mu1, mu0)
-        mu0 /= np.linalg.norm(mu0, ord=1)
-        mu1 /= np.linalg.norm(mu1, ord=1)
-        D, S, S0, S1 = calculate_decision_vector(predictor_opti if i == k -1 else predictor, mu1, mu0, weights, J)
-        S /= np.linalg.norm(S, ord=1) if i != k -1 else 1
-        decision_vector = np.column_stack((D,J,S,OS,OD))
-        confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
-        print(confusion_matrix)
-        print(accuracy(decision_vector))
-        #plot(decision_vector, S, S0, S1, args, windows_id=(i+2) * 100)
-    plot(decision_vector, S, S0, S1, args, windows_id=(k+2) * 100)
+    def difference_matrix(a):
+        x = np.reshape(a, (len(a), 1))
+        return x - x.transpose()
 
-    '''
-    bias = determine_bias(S, mu0, mu1, weights, J)
-    print('BIAS: {}'.format(bias))
-    dr_bias = functools.partial(decision_rule, bias=bias)
-    predictor_bias = np.vectorize(dr_bias)
-    D, S, S0, S1 = calculate_decision_vector(predictor_bias, mu1, mu0, weights, J)
-    decision_vector = np.column_stack((D,J,S,OS,OD))
-    confusion_matrix, labels = calculate_confusion_matrix(decision_vector)
-    print(confusion_matrix)
-    print(accuracy(decision_vector))
-    #'''
-    plot(decision_vector, S, S0, S1, args, windows_id=999)
-    '''
+    dmu = mu1 - mu0
+    vmu = difference_matrix(dmu)
+    min_vmu = vmu.min()
+    print('# Minimal variation in Mu: {}'.format(min_vmu))
+    print('# Min in Mu: {}'.format(min(dmu)))
 
-    #'''
-    '''
-    SERIALIZE
-    '''
-    np.savetxt('Mu_0_separated.txt', mu0, fmt='%.15f')
-    np.savetxt('Mu_1_separated.txt', mu1, fmt='%.15f')
 
-    '''
-    DISPLAY
-    '''
-    plt.show()
+    
+    min_vS = np.abs(S).min()
+    print('# Min variation in initial S: {}'.format(min_vS))
+
+    IND_SIZE = len(mu0)
+
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", np.ndarray, fitness=creator.FitnessMax)
+    creator.create("Strategy", np.ndarray, typecode="d", strategy=None)
+
+    def initES(icls, scls, size, imin, imax, smin, smax):
+        ind = icls(random.uniform(imin, imax) for _ in range(size))
+        ind.strategy = scls(random.uniform(smin, smax) for _ in range(size))
+        return ind
+
+
+    toolbox = base.Toolbox()
+    #toolbox.register("attr_float", random.uniform, -min_vmu / 10, min_vmu / 10)
+    #toolbox.register("attr_float", initES, -min_vmu / len(weights[0]), min_vmu / len(weights[0]), -1., 1.)
+    toolbox.register("individual", initES, creator.Individual,
+                     creator.Strategy, IND_SIZE, -min_vmu / len(weights[0]), min_vmu / len(weights[0]), 0, 1.)
+                     #creator.Strategy, IND_SIZE, -min(dmu) / 100 , min(dmu) / 100, -1., 1.)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", fitness_function)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mutate", tools.mutGaussian, mu=0.0, sigma=min_vmu / 20, indpb=0.05)
+    #toolbox.register("mutate", tools.mutGaussian, mu=0.0, sigma=min_vmu / len(weights[0]), indpb=0.05)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+
+    pop = toolbox.population(n=100)
+    #for ind in pop:
+    #    print(fitness_function(ind))
+
+    stats = tools.Statistics(key=lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
+    #algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.05, ngen=1000, stats=stats, verbose=True)
+    algorithms.eaMuPlusLambda(pop, toolbox, mu=100, lambda_=50, cxpb=0.5, mutpb=0.2, ngen=1000, stats=stats, verbose=True)
+    #algorithms.eaMuCommaLambda(pop, toolbox, mu=3, lambda_=5, cxpb=0.5, mutpb=0.2, ngen=100, stats=stats, verbose=True)
+
+    top10 = tools.selBest(pop, k=1)
+    for e in top10:
+        print(e.fitness)
+        #print("{} {}".format(e.fitness, e))
+
+    mu1_d = np.array(mu1)
+    mu0_d = np.array(mu0)
+    for i,_ in enumerate(top10[0]):
+        mu1_d[i] += top10[0][i] / 2.
+        mu0_d[i] -= top10[0][i] / 2.
+    #mu0_d /= np.linalg.norm(mu0_d, ord=1)
+    #mu1_d /= np.linalg.norm(mu1_d, ord=1)
+
+    np.savetxt('Mu_0_optimized.txt', mu0_d, fmt='%.15f')
+    np.savetxt('Mu_1_optimized.txt', mu1_d, fmt='%.15f')
+
 
 def parse_args(parser0):
     args = parser.parse_args()

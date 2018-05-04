@@ -11,16 +11,16 @@ ONLY_ANALYSIS = False
 Instances and seeds used for the article 'Binary Classification On Hypergraphs'
 '''
 INSTANCES = [
-    #('adult', 1506844911), # 0.8217306
+    ('adult', None), # 1509029032), # 0.8217306
     #('audiology', 1506863181), # 0.9886078
-    ('breast', 1506930659), # 0.9663081
+    #('breast', 1509009986), # 0.9663081
     #('breast_original', 1506901272), # 0.967647
-    #('heart', 1506861795), # 0.8570092
+    #('heart', 1508982364), # 0.8570092
     #('ionosphere', 1506867085), # 0.8453238
-    #('mushrooms', 1506776153), # 1.0 
-    #('phishing', 1506814280), # 0.9536304
-    #('skin', 1506824485), # 0.9831426
-    #('splice', 1506834690), # 0.9416073
+    #('mushrooms', 1508973358), # 1.0 
+    #('phishing', 1508982614), # 0.9536304
+    #('skin', 1508993549), # 0.9831426
+    #('splice', 1509028798), # 0.9416073
 ]
 
 def read_csv(path):
@@ -67,9 +67,11 @@ def main():
                 pct,
                 LOG_FILE
             )
+            print(cmd)
             rc = subprocess.call(cmd, shell=True)
             
-            fold_output_path = os.path.join("{}_{}".format(instance[0], pct))
+            #fold_output_path = os.path.join("{}_{}".format(instance[0], pct))
+            fold_output_path = os.path.join("{}".format(instance[0]))
             path = os.path.join(fold_output_path, 'hcbr.global.log.csv')
             h, res = read_csv(path)
             '''
@@ -78,13 +80,15 @@ def main():
             30 - strength time
             38 - perdiction time
             46 - accuracy
+            60 - MCC
             '''
-            columns = [6, 29, 30, 37, 46]
-            s = [0.] * 5
+            columns = [6, 29, 30, 37, 46, 60]
+            s = [0.] * 6
             for k, l in enumerate(res):
                 for j, i in enumerate(columns):
                     if j == 3:
                         print(k, h[i], float(l[i].strip()), s[j])
+                    #print(j, l[i].strip())
                     s[j] += float(l[i].strip())
             print('building: {}'.format(s[0] / kfold))
             print('strength: {}'.format(s[1] / kfold))
@@ -92,10 +96,11 @@ def main():
             print('prediction: {}'.format(s[3] / kfold))
             print('total: {}'.format((s[0] + s[1] + s[2] + s[3]) / kfold))
             print('accuracy: {}'.format(s[4] / kfold))
+            print('MCC: {}'.format(s[5] / kfold))
 
             
             with open('{}.size.txt'.format(instance[0]), 'a') as file:
-                file.write('{} {} {} {} {} {} {} {}\n'.format(
+                file.write('{} {} {} {} {} {} {} {} {}\n'.format(
                     pct, 
                     kfold, 
                     s[0] / kfold, 
@@ -103,7 +108,8 @@ def main():
                     s[2] / kfold,
                     s[3] / kfold, 
                     (s[0] + s[1] + s[2] + s[3]) / kfold, 
-                    s[4] / kfold
+                    s[4] / kfold,
+                    s[5] / kfold
                 ))
 
 

@@ -5,25 +5,25 @@ import subprocess
 
 LOG_FILE = "validation.log"
 ONLY_ANALYSIS = False
-NESTED_CROSS_VALIDATION = False
+NESTED_CROSS_VALIDATION = True
 
 '''
 Instances and seeds used for the article 'Binary Classification On Hypergraphs'
 '''
 INSTANCES = [
-    #('adult', 1509029032), #    0.8206451 1506844911), # 0.8217306
+    #('adult', None), #1509029032), #    0.8206451 1506844911), # 0.8217306
     #('audiology', 1509000373), #OK 0.9947368 1506863181), # 0.9886078
-    #('breast', 1509009986), # OK 0.9695652 1506930659), # 0.9663081
+    ('breast', None) #1506930659), # OK 0.9695652 1506930659), # 0.9663081
     #('breast_original', 1506901272), # 0.967647
-    #('heart', 1508982364), # OK 0.8576923 1506861795), # 0.8570092
+    #('heart', None), #1508982364), # OK 0.8576923 1506861795), # 0.8570092
     #('ionosphere', 1506867085), # 0.8453238
     #('mushrooms', 1508973358), # OK 1 #1506776153), # 1.0 
     #('phishing', 1508982614), # OK 0.9605072 # 1506814280), # 0.9536304
     #('skin', 1508993549), # OK 0.9864599 #1506824485), # 0.9831426
-    #('splice', 1509028798), # OK    0.9443038 # 1506834690), # 0.9416073
+    #('splice', None) #1509028798), # OK    0.9443038 # 1506834690), # 0.9416073
 ]
 
-#'''
+'''
 INSTANCES = [
     ('echr_full_3', None),#None),#1509757550),
     ('echr_full_6', None),

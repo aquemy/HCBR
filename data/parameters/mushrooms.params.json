@@ -10,7 +10,7 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 100,
+        "limit": 7311,
         "sample_out": true,
         "heuristic": true,
         "keep_offset": true,
@@ -22,8 +22,8 @@
     },
     "hyperparameters":{
         "bias": 0.0,
-        "auto_bias": true,
-        "eta1": 0.0,
+        "auto_bias": false,
+        "eta1": -0.0002,
         "eta0": 0.0,
         "bar_eta0": 0.0,
         "bar_eta1": 0.0,

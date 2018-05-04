@@ -32,7 +32,7 @@
         "gamma": 0.0
     },
     "serialization": {
-        "serialize": false,
+        "serialize": true,
         "path": "./",
         "weight_file": "W.txt",
         "mu0_file": "mu0.txt",

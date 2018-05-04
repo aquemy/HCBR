@@ -212,8 +212,8 @@ public:
         c_to_e_overlap[1] = std::map<int, std::map<int, double>>();
     }
 
-    CaseBase(std::string path) {
-        deserialize(path);
+    CaseBase(std::string path, std::string mu1_path = "Mu_1.txt", std::string mu0_path = "Mu_0.txt") {
+        deserialize(path, mu1_path, mu0_path);
     }
 
     ////////////////////////////////////////////////////////////
@@ -523,13 +523,13 @@ public:
         return res;
     }
 
-    void deserialize(std::string path) {
+    void deserialize(std::string path, std::string mu1_path = "Mu_1.txt", std::string mu0_path = "Mu_0.txt") {
         // Reading cases
         cases = read_case_base(path + "/training_set_cases.txt");
         intersection_family = read_case_base(path + "/partition.txt");
         outcomes = read_mapping(path + "/training_set_outcomes.txt");
-
-        deserialize_intrinsic_strength(path + "/Mu_0.txt", path + "/Mu_1.txt");
+        std::cerr << "# LOAD " << path + "/" + mu0_path << std::endl;
+        deserialize_intrinsic_strength(path + "/" + mu0_path, path + "/" + mu1_path);
         deserialize_f_to_e(path + "/features_to_partition.txt");
         deserialize_e_to_c(path + "/partition_to_cases.txt");
         deserialize_c_to_e(path + "/cases_to_partition.txt");

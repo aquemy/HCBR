@@ -50,6 +50,8 @@ int main(int argc, char** argv)
         cerr << "Deserialization path does not exist." << endl;
         return 3;
     }
+    const auto mu0_path_deserialize = params["deserialization"]["mu0_file"];
+    const auto mu1_path_deserialize = params["deserialization"]["mu1_file"];
 
     const auto serialize = params["serialization"]["serialize"];
     const std::string serialize_path = params["serialization"]["path"];
@@ -61,6 +63,7 @@ int main(int argc, char** argv)
 
     const auto mu0_path = params["serialization"]["mu0_file"];
     const auto mu1_path = params["serialization"]["mu1_file"];
+    /*
     auto mu1 = vector<double>();
     auto mu0 = vector<double>();
     try {
@@ -72,6 +75,7 @@ int main(int argc, char** argv)
         cerr << "Error: " << e.what() << endl;
         return 3;
     }
+    */
 
     // 1.1 CMD verification
     const auto delta = float(params["hyperparameters"]["delta"]);
@@ -334,7 +338,7 @@ int main(int argc, char** argv)
     auto cb = CaseBase(size(feature_map), n_cases);
     if(deserialize) {
         cerr << "# Model deserialization..." << endl;
-        cb = CaseBase(deserialize_path);
+        cb = CaseBase(deserialize_path, mu1_path_deserialize, mu0_path_deserialize);
     }
 
     auto start_global_time = std::chrono::steady_clock::now();
@@ -498,6 +502,11 @@ int main(int argc, char** argv)
         cb.serialize_strength(serialize_path + "Mu_0_pre_training.txt", serialize_path + "Mu_1_pre_training.txt");
         cb.serialize_strength(serialize_path + "Mu_0.txt", serialize_path + "Mu_1.txt");
     }
+
+    for(auto e: cb.e_intrinsic_strength[0]) {
+        cerr << e.second << " " << std::endl;
+    }
+    
 
     cerr << "# Learning phase..." << endl;
     auto offset_0 = 0.;
@@ -746,6 +755,8 @@ int main(int argc, char** argv)
     max_dfr_pct = 0.;
     avg_dfr_pct = 0.;
 
+    auto W_pred = std::vector<std::vector<double>>{};
+
 
     pred_outfile.open("predictions.txt", std::ofstream::out | std::ofstream::trunc);
     pred_outfile << "index correct pred s_1 s_0" << endl;
@@ -849,7 +860,16 @@ int main(int argc, char** argv)
               }
             }
             //*/
-           
+
+            if (serialize) {
+                auto proj_row = std::vector<double>(std::size(cb.intersection_family), 0.);
+                for(const auto& k: proj.first) {
+                    r = size(cb.intersection_family[k.first]) / double(non_disc_features);
+                    proj_row[k.first] = r;
+                }
+                W_pred.push_back(proj_row);
+            }
+                   
             //cb.display();
             auto end_iteration = std::chrono::steady_clock::now();
             auto diff = end_iteration - start_iteration;
@@ -965,6 +985,17 @@ int main(int argc, char** argv)
         cerr << "-----------------" << endl;
         cerr << "- " << std::fixed << fn << " - " << tn << " - " << endl;
         cerr << "-----------------" << endl;
+
+        if (serialize) {
+            cerr << "# Prediction serialization..." << endl;
+            std::cerr << "# Saving the [" << std::size(W_pred) << "," << std::size(cb.intersection_family) << "] weight matrix..." << endl;
+            std::ofstream w_outfile;
+            w_outfile.open("W_pred.txt", std::ofstream::out | std::ofstream::trunc);
+            for(auto i = 0; i < std::size(W_pred); ++i) {
+                w_outfile << std::setprecision(15) << W_pred[i] << std::endl;
+            }
+            w_outfile.close();
+        }
     }
     pred_outfile.close();
     end_time = std::chrono::steady_clock::now();

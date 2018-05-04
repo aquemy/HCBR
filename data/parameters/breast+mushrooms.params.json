@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/skin_casebase.txt",
-        "outcomes":"../data/skin_outcomes.txt",
+        "casebase":"../data/breast+mushrooms_casebase.txt",
+        "outcomes":"../data/breast+mushrooms_outcomes.txt",
         "features":"../"
     },
     "output": {
@@ -10,13 +10,13 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 220551,
+        "limit": 1258,
         "sample_out": true,
         "heuristic": true,
         "keep_offset": true,
-        "shuffle": false,
-        "online": true,
-        "training_iterations": 1,
+        "shuffle": true,
+        "online": false,
+        "training_iterations": 10,
         "no_prediction": false,
         "starting_case": 0
     },

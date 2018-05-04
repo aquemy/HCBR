@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/skin_casebase.txt",
-        "outcomes":"../data/skin_outcomes.txt",
+        "casebase":"../data/madelon_casebase.txt",
+        "outcomes":"../data/madelon_outcomes.txt",
         "features":"../"
     },
     "output": {
@@ -10,9 +10,9 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 220551,
+        "limit": 1000,
         "sample_out": true,
-        "heuristic": true,
+        "heuristic": false,
         "keep_offset": true,
         "shuffle": false,
         "online": true,

@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/skin_casebase.txt",
-        "outcomes":"../data/skin_outcomes.txt",
+        "casebase":"../data/adult+heart_casebase.txt",
+        "outcomes":"../data/adult+heart_outcomes.txt",
         "features":"../"
     },
     "output": {
@@ -10,11 +10,11 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 220551,
+        "limit": 2000,
         "sample_out": true,
-        "heuristic": true,
+        "heuristic": false,
         "keep_offset": true,
-        "shuffle": false,
+        "shuffle": true,
         "online": true,
         "training_iterations": 1,
         "no_prediction": false,

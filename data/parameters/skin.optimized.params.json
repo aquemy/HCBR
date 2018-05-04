@@ -32,7 +32,7 @@
         "gamma": 0.0
     },
     "serialization": {
-        "serialize": true,
+        "serialize": false,
         "path": "./",
         "weight_file": "W.txt",
         "mu0_file": "mu0.txt",
@@ -40,10 +40,10 @@
         "append_run_number": false
     },
     "deserialization": {
-        "deserialize": false,
+        "deserialize": true,
         "level": "full",
-        "mu0_file": "Mu_0_post_training.txt",
-        "mu1_file": "Mu_1_post_training.txt",
+        "mu0_file": "../script/Mu_0_optimized.txt",
+        "mu1_file": "../script/Mu_1_optimized.txt",
         "path": "./"
     }
 }

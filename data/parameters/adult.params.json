@@ -10,7 +10,7 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 100,
+        "limit": 20000,
         "sample_out": true,
         "heuristic": false,
         "keep_offset": true,

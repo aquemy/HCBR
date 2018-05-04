@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/skin_casebase.txt",
-        "outcomes":"../data/skin_outcomes.txt",
+        "casebase":"../data/phishing_casebase.txt",
+        "outcomes":"../data/phishing_outcomes.txt",
         "features":"../"
     },
     "output": {
@@ -10,13 +10,13 @@
     "parameters": {
         "run_id": 0,
         "seed": 0,
-        "limit": 220551,
+        "limit": 9949,
         "sample_out": true,
         "heuristic": true,
         "keep_offset": true,
         "shuffle": false,
         "online": true,
-        "training_iterations": 1,
+        "training_iterations": 0,
         "no_prediction": false,
         "starting_case": 0
     },
@@ -32,7 +32,7 @@
         "gamma": 0.0
     },
     "serialization": {
-        "serialize": true,
+        "serialize": false,
         "path": "./",
         "weight_file": "W.txt",
         "mu0_file": "mu0.txt",
@@ -40,10 +40,10 @@
         "append_run_number": false
     },
     "deserialization": {
-        "deserialize": false,
+        "deserialize": true,
         "level": "full",
-        "mu0_file": "Mu_0_post_training.txt",
-        "mu1_file": "Mu_1_post_training.txt",
+        "mu0_file": "../script/Mu_0_optimized.txt",
+        "mu1_file": "../script/Mu_1_optimized.txt",
         "path": "./"
     }
 }

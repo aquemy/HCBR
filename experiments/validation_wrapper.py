@@ -12,7 +12,7 @@ DATA_FOLDER = '../data'
 KFOLD_SCRIPT = 'kfold_validation.py'
 ACCURACY_ROW = 4
 
-METAOPTIMIZATION = '../utils/paramils/paramils_run.py'
+METAOPTIMIZATION = '../tuning/hyperopt_wrapper.py'
 METAOPTIMIZATION_TIMEOUT = 60
 
 def convert_paramILS_to_HCBR_params(paramILS):
@@ -176,8 +176,9 @@ def main():
                 print('# Start Meta-optimization for Model Selection')
                 nested_fold_casebase = os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_casebase.fold_{}.txt".format(instance_name, i))
                 nested_fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_outcomes.fold_{}.txt".format(instance_name, i))
-                cmd = "python {} {} {} {} {}".format(
+                cmd = "python {} {} {} {} {} {}".format(
                         METAOPTIMIZATION,
+                        instance_name,
                         nested_fold_casebase,
                         nested_fold_outcomes,
                         METAOPTIMIZATION_TIMEOUT,
@@ -186,11 +187,30 @@ def main():
                 print('# CMD: {}'.format(cmd))
                 p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 output, err = p.communicate()
-                output = json.loads(output)
-                best_params = convert_paramILS_to_HCBR_params(output)
-                print('# Converted params: {}'.format(best_params))
-                parameters.update(best_params)
-                print('# Final configuration to be used: {}'.format(parameters))
+                print('# Validation accuracy: {}'.format(output))
+                best_params = json.load(open('../tuning/{}.best.params.json'.format(instance_name)))
+                print(best_params)
+                del best_params['parameters']
+                del best_params['input']
+                del best_params['parameter_file']
+
+                #parameters['parameters']["limit"] =  best_params['parameters']['limit']
+
+                parameters['parameters']['heuristic'] =  best_params['heuristic']
+                parameters['parameters']['online'] =  best_params['online']
+                parameters['parameters']['training_iterations'] =  best_params['training_iterations' ]
+
+                parameters['hyperparameters']['biais'] = best_params['biais']
+                parameters['hyperparameters']['eta1'] = best_params['eta1']
+                parameters['hyperparameters']['eta0'] = best_params['eta0']
+                parameters['hyperparameters']['bar_eta1'] = best_params['bar_eta1']
+                parameters['hyperparameters']['bar_eta0'] = best_params['bar_eta0']
+                parameters['hyperparameters']['l1'] = best_params['l1']
+                parameters['hyperparameters']['l0'] = best_params['l0']
+           #best_params = convert_paramILS_to_HCBR_params(output)
+                #print('# Converted params: {}'.format(best_params))
+                #parameters.update(best_params)
+                #print('# Final configuration to be used: {}'.format(parameters))
             try:
                 shutil.rmtree(fold_output_path)
             except:
@@ -203,15 +223,17 @@ def main():
                     continue
             
             # Modify the configuration for the run
+
             parameters["input"]["casebase"] = fold_casebase
             parameters["input"]["outcomes"] = fold_outcomes
             parameters["parameters"]["limit"] = examples
             parameters["parameters"]["run_id"] = i
 
             fold_param_file = os.path.join(fold_output_path, 'params_{}.json'.format(run_nb))
-            with open(fold_param_file, 'w') as f:
-                f.write(json.dumps(parameters))
 
+            with open(fold_param_file, 'w') as f:
+                f.write(json.dumps(parameters, indent=4))
+            print('# Final configuration: {}'.format(parameters))
             cmd = "{} --params {} > {} 2> {}".format(executable_path, 
                     fold_param_file, 
                     os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
@@ -400,6 +422,7 @@ def main():
 
         msg = "{} {} {}\n".format(instance_name, seed, average_accuracy / float(k))
         sys.stderr.write(msg)
+        print(msg)
        
 if __name__ == '__main__':
     main()
