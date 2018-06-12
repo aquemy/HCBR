@@ -1,7 +1,7 @@
 {
     "input": {
-        "casebase":"../data/skin_casebase.txt",
-        "outcomes":"../data/skin_outcomes.txt",
+        "casebase":"../experiments/skin/input_data/skin_casebase.fold_0.txt",
+        "outcomes":"../experiments/skin/input_data/skin_outcomes.fold_0.txt",
         "features":"../"
     },
     "output": {
@@ -16,7 +16,7 @@
         "keep_offset": true,
         "shuffle": false,
         "online": true,
-        "training_iterations": 1,
+        "training_iterations": 0,
         "no_prediction": false,
         "starting_case": 0
     },
