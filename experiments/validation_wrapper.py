@@ -12,8 +12,10 @@ DATA_FOLDER = '../data'
 KFOLD_SCRIPT = 'kfold_validation.py'
 ACCURACY_ROW = 4
 
-METAOPTIMIZATION = '../tuning/hyperopt_wrapper.py'
-METAOPTIMIZATION_TIMEOUT = 60
+#METAOPTIMIZATION = '../tuning/hyperopt_wrapper.py'
+#METAOPTIMIZATION_TIMEOUT = 60
+
+METAOPTIMIZATION = '../script/genetic_algorithm.py'
 
 def convert_paramILS_to_HCBR_params(paramILS):
     convert_map = {
@@ -149,68 +151,32 @@ def main():
         print('# Start validation runs...')
         average_accuracy = 0
     for i in range(0, k):
+        print('\n#########################')
         print('# - Run {}'.format(i))
+        print('#########################')
         run_nb = 'run_{}'.format(i)
         fold_casebase = os.path.join("../experiments", base_output_path, "input_data", "{}_casebase.fold_{}.txt".format(instance_name, i))
         fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data", "{}_outcomes.fold_{}.txt".format(instance_name, i))
         fold_output_path = os.path.join("../experiments", base_output_path, run_nb)
+
+        parameters_path = os.path.join(DATA_FOLDER, "parameters", "{}.params.json".format(instance_name))
+        default_params = {
+                # TODO
+            }
+        parameters = None
+        try:
+            with open(parameters_path) as json_data:
+                parameters = json.load(json_data)
+        except Exception as e:
+            print('[ERROR] Could not retrieve parameters. Use default parameters.')
+            print(e)
+
+        parameters["input"]["casebase"] = fold_casebase
+        parameters["input"]["outcomes"] = fold_outcomes
+        parameters["parameters"]["limit"] = examples
+        parameters["parameters"]["run_id"] = i
+
         if not only_analysis:
-            if(nested_CV):
-                print('# Creating nested k-fold for Meta-optimization')
-                fold_creation_output = os.path.join(base_output_path, 'kfold_creation.{}.log'.format(i))
-                cmd_fold_validation = "python {} {} {} {} {} {} {} > {}".format(
-                    KFOLD_SCRIPT,
-                    k,
-                    fold_casebase,
-                    fold_outcomes,
-                    os.path.join(base_output_path, "input_data/nested_fold{}".format(i)),
-                    seed if seed is not None else "",
-                    l,
-                    fold_creation_output
-                    )
-                print('CMD: {}'.format(cmd_fold_validation))
-                rc = subprocess.call(cmd_fold_validation, shell=True)
-                print('RC: {}'.format(rc))
-                if rc:
-                    exit(1)
-                print('# Start Meta-optimization for Model Selection')
-                nested_fold_casebase = os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_casebase.fold_{}.txt".format(instance_name, i))
-                nested_fold_outcomes =  os.path.join("../experiments", base_output_path, "input_data/nested_fold{}".format(i), "{}_outcomes.fold_{}.txt".format(instance_name, i))
-                cmd = "python {} {} {} {} {} {}".format(
-                        METAOPTIMIZATION,
-                        instance_name,
-                        nested_fold_casebase,
-                        nested_fold_outcomes,
-                        METAOPTIMIZATION_TIMEOUT,
-                        int(examples * l)
-                    )
-                print('# CMD: {}'.format(cmd))
-                p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                output, err = p.communicate()
-                print('# Validation accuracy: {}'.format(output))
-                best_params = json.load(open('../tuning/{}.best.params.json'.format(instance_name)))
-                print(best_params)
-                del best_params['parameters']
-                del best_params['input']
-                del best_params['parameter_file']
-
-                #parameters['parameters']["limit"] =  best_params['parameters']['limit']
-
-                parameters['parameters']['heuristic'] =  best_params['heuristic']
-                parameters['parameters']['online'] =  best_params['online']
-                parameters['parameters']['training_iterations'] =  best_params['training_iterations' ]
-
-                parameters['hyperparameters']['biais'] = best_params['biais']
-                parameters['hyperparameters']['eta1'] = best_params['eta1']
-                parameters['hyperparameters']['eta0'] = best_params['eta0']
-                parameters['hyperparameters']['bar_eta1'] = best_params['bar_eta1']
-                parameters['hyperparameters']['bar_eta0'] = best_params['bar_eta0']
-                parameters['hyperparameters']['l1'] = best_params['l1']
-                parameters['hyperparameters']['l0'] = best_params['l0']
-           #best_params = convert_paramILS_to_HCBR_params(output)
-                #print('# Converted params: {}'.format(best_params))
-                #parameters.update(best_params)
-                #print('# Final configuration to be used: {}'.format(parameters))
             try:
                 shutil.rmtree(fold_output_path)
             except:
@@ -221,11 +187,60 @@ def main():
                 if e.errno != errno.EEXIST:
                     print('[ERROR] Could not create output path for {}'.format(run_nb))
                     continue
-            
-            # Modify the configuration for the run
+            if(nested_CV):
+                print('# Start Meta-optimization for Model Selection')
+                print('# Preliminary run')
+                fold_param_file = os.path.join(fold_output_path, 'params_{}.init.json'.format(run_nb))
+
+                with open(fold_param_file, 'w') as f:
+                    f.write(json.dumps(parameters, indent=4))
+                print('# Initial configuration: {}'.format(parameters))
+                cmd = "{} --params {} > {} 2> {}".format(executable_path,
+                        fold_param_file,
+                        os.path.join(fold_output_path, 'output_{}.init.txt'.format(run_nb)),
+                        os.path.join(fold_output_path, 'log_{}.init.txt'.format(run_nb))
+                        )
+                '''
+                cmd = "{} -c {} -o {} -l {} -s -p {} -e {} -d {} -g {} {} {} -b {} > {} 2> {}".format(
+                        executable_path,
+                        fold_casebase,
+                        fold_outcomes,
+                        examples,
+                        parameters['learning_phases'],
+                        parameters['eta'],
+                        parameters['delta'],
+                        parameters['gamma'],
+                        '-i' if int(parameters['online']) == 1 else "",
+                        '-z' if int(parameters['heuristic']) == 1 else "",
+                        i,
+                        os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
+                        os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))
+                    )
+                '''
+                print('#   CMD: {}'.format(cmd))
+                rc = subprocess.call(cmd, shell=True)
+                p = Popen(['tail', '-n', '1', os.path.join(fold_output_path, 'output_{}.init.txt'.format(run_nb))], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                output, err = p.communicate()
+                prun_accuracy = float(output.split()[ACCURACY_ROW])
+                print('# Preliminary run accuracy: {}'.format(prun_accuracy))
+                cmd = "python {} \
+                    --weights ../experiments/W.txt \
+                    --mu0 ../experiments/Mu_0_post_training.txt \
+                    --mu1 ../experiments/Mu_1_post_training.txt \
+                    --outcomes {}".format(METAOPTIMIZATION, fold_outcomes)
+                print('# CMD: {}'.format(cmd))
+                p = Popen(cmd.split(), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                output, err = p.communicate()
+
+                parameters_path = os.path.join(DATA_FOLDER, "parameters", "{}.optimized.params.json".format(instance_name))
+                parameters = json.load(open(parameters_path))
+
+                parameters["deserialization"]["mu0_file"] = "../experiments/Mu_0_optimized.txt"
+                parameters["deserialization"]["mu1_file"] = "../experiments/Mu_1_optimized.txt"
 
             parameters["input"]["casebase"] = fold_casebase
             parameters["input"]["outcomes"] = fold_outcomes
+
             parameters["parameters"]["limit"] = examples
             parameters["parameters"]["run_id"] = i
 
@@ -239,29 +254,16 @@ def main():
                     os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
                     os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))
                     )
-            '''
-            cmd = "{} -c {} -o {} -l {} -s -p {} -e {} -d {} -g {} {} {} -b {} > {} 2> {}".format(
-                    executable_path,
-                    fold_casebase,
-                    fold_outcomes,
-                    examples,
-                    parameters['learning_phases'],
-                    parameters['eta'],
-                    parameters['delta'],
-                    parameters['gamma'],
-                    '-i' if int(parameters['online']) == 1 else "",
-                    '-z' if int(parameters['heuristic']) == 1 else "",
-                    i,
-                    os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb)),
-                    os.path.join(fold_output_path, 'log_{}.txt'.format(run_nb))
-                )
-            '''
+
             print('#   CMD: {}'.format(cmd))
             rc = subprocess.call(cmd, shell=True)
-            shutil.move("training.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "training.run_{}.log.csv".format(i)))
-            shutil.move("prediction.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "prediction.run_{}.log.csv".format(i)))
-            shutil.move("overlap.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "overlap.run_{}.log.csv".format(i)))
-            shutil.move("strength.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "strength.run_{}.log.csv".format(i)))
+            try:
+                shutil.move("training.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "training.run_{}.log.csv".format(i)))
+                shutil.move("prediction.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "prediction.run_{}.log.csv".format(i)))
+                shutil.move("overlap.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "overlap.run_{}.log.csv".format(i)))
+                shutil.move("strength.run_{}.log.csv".format(i), os.path.join(base_output_path, "run_{}".format(i), "strength.run_{}.log.csv".format(i)))
+            except Exception as e:
+                pass
             p = Popen(['tail', '-n', '1', os.path.join(fold_output_path, 'output_{}.txt'.format(run_nb))], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             output, err = p.communicate()
             run_accuracy = float(output.split()[ACCURACY_ROW])
