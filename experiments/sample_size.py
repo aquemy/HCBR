@@ -81,8 +81,9 @@ def main():
             38 - perdiction time
             46 - accuracy
             60 - MCC
+            34 - accuracy training
             '''
-            columns = [6, 29, 30, 37, 46, 60]
+            columns = [6, 29, 30, 37, 46, 60, 34]
             s = [0.] * 6
             for k, l in enumerate(res):
                 for j, i in enumerate(columns):
@@ -97,6 +98,7 @@ def main():
             print('total: {}'.format((s[0] + s[1] + s[2] + s[3]) / kfold))
             print('accuracy: {}'.format(s[4] / kfold))
             print('MCC: {}'.format(s[5] / kfold))
+            print('training accuracy: {}'.format(s[6] / kfold))
 
             
             with open('{}.size.txt'.format(instance[0]), 'a') as file:
@@ -109,7 +111,8 @@ def main():
                     s[3] / kfold, 
                     (s[0] + s[1] + s[2] + s[3]) / kfold, 
                     s[4] / kfold,
-                    s[5] / kfold
+                    s[5] / kfold,
+                    s[6] / kfold
                 ))
 
 
