@@ -1,0 +1,32 @@
+    \renewcommand\arraystretch{1.5}
+    \setlength\tabcolsep{0pt}
+    \begin{table}
+    \caption{Confusion matrix and performances indicators for the \texttt{splice} dataset.}
+    \label{table:splice}
+     \begin{small}
+    \begin{tabular}{c >{\bfseries}r @{\hspace{0.7em}}c @{\hspace{0.4em}}c @{\hspace{0.7em}}l}
+      \multirow{10}{*}{\rotatebox{90}{\parbox{3.1cm}{\bfseries\centering Predicted class}}} &
+        & \multicolumn{2}{c}{\bfseries Real class} & \\
+      & & \bfseries P & \bfseries N & \bfseries Total \\
+      & \cmlegend{P} & \cmbox{155.20} & \cmbox{9.00} & \cmlegend{164.20} \\
+      & \cmlegend{N} & \cmbox{9.00} & \cmbox{142.80} & \cmlegend{151.80} \\
+      & \cmlegend{Total} & \cmlegend{164.20} & \cmlegend{151.80} & \cmlegend{318}
+    \end{tabular}
+    \end{small}
+    \hfill
+    \begin{small}
+    \begin{tabular}{| @{\hspace{0.7em}}l  @{\hspace{0.7em}} l  @{\hspace{0.7em}}|}
+        \hline
+        Accuracy: &0.9430\\
+        Prevalence: & 0.5164\\
+        True positive rate: & 0.9448\\
+        True negative rate: &0.9403 \\
+        Positive predictive value: & 0.9453 \\
+        Negative predictive value: & 0.9409\\
+        F1 score: & 0.9450\\
+        Matthews corr. coef.: & 0.8857\\
+        \hline
+      \end{tabular}
+    \end{small}
+    \end{table}
+    

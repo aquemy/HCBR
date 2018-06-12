@@ -1,0 +1,32 @@
+    \renewcommand\arraystretch{1.5}
+    \setlength\tabcolsep{0pt}
+    \begin{table}
+    \caption{Confusion matrix and performances indicators for the \texttt{breast} dataset.}
+    \label{table:breast}
+     \begin{small}
+    \begin{tabular}{c >{\bfseries}r @{\hspace{0.7em}}c @{\hspace{0.4em}}c @{\hspace{0.7em}}l}
+      \multirow{10}{*}{\rotatebox{90}{\parbox{3.1cm}{\bfseries\centering Predicted class}}} &
+        & \multicolumn{2}{c}{\bfseries Real class} & \\
+      & & \bfseries P & \bfseries N & \bfseries Total \\
+      & \cmlegend{P} & \cmbox{23.20} & \cmbox{1.50} & \cmlegend{24.70} \\
+      & \cmlegend{N} & \cmbox{0.50} & \cmbox{43.80} & \cmlegend{44.30} \\
+      & \cmlegend{Total} & \cmlegend{23.70} & \cmlegend{45.30} & \cmlegend{71}
+    \end{tabular}
+    \end{small}
+    \hfill
+    \begin{small}
+    \begin{tabular}{| @{\hspace{0.7em}}l  @{\hspace{0.7em}} l  @{\hspace{0.7em}}|}
+        \hline
+        Accuracy: &0.9710\\
+        Prevalence: & 0.3338\\
+        True positive rate: & 0.9800\\
+        True negative rate: &0.9675 \\
+        Positive predictive value: & 0.9372 \\
+        Negative predictive value: & 0.9885\\
+        F1 score: & 0.9574\\
+        Matthews corr. coef.: & 0.9365\\
+        \hline
+      \end{tabular}
+    \end{small}
+    \end{table}
+    

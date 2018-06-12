@@ -1,0 +1,159 @@
+# Loading the instance files...
+# Perform sanity checks on the dataset
+# Setting the parameters...
+# Initialize...
+# Online: 1
+# Verbose level: 0
+# Cases: 699
+# Total features: 6291
+# Unique features: 90 (ratio: 0.0143062)
+# Minimum case size: 9
+# Maximum case size: 9
+# Average case size: 9
+# Add cases...
+# Model serialization...
+# Saving the [629,90] weight matrix...
+# Calculate intrinsic strength...
+Calculate strength for 629
+Serialization of pre-training strength vectors...
+0.00119363 
+0.00743589 
+0.100935 
+0.119303 
+0.00162322 
+0.0219866 
+0.00428793 
+0.0178525 
+0.117073 
+0.108922 
+2.26738e-05 
+0.178354 
+0.000434291 
+0.000182205 
+0.0020305 
+0.125252 
+0.00117937 
+0.00895913 
+0.00146347 
+1.13557e-06 
+0.000399719 
+0.0174024 
+0.133259 
+2.70331e-05 
+0.000404484 
+2.95155e-05 
+0.0173098 
+3.55463e-05 
+0 
+1.79654e-06 
+0 
+4.03237e-05 
+0.00314455 
+4.85734e-05 
+0.000207396 
+0.000246441 
+5.63628e-06 
+0 
+0 
+2.55051e-05 
+2.1008e-05 
+2.6513e-06 
+2.96432e-05 
+0 
+1.50115e-05 
+0.00114861 
+0.00083912 
+0.000308524 
+0.00134512 
+1.05529e-06 
+0 
+0.000152928 
+0.0014254 
+1.25155e-06 
+2.14505e-05 
+0.00114686 
+0.000473327 
+0.000195791 
+0.000540128 
+7.10137e-06 
+0 
+2.95058e-05 
+3.46182e-05 
+4.56121e-05 
+0 
+2.75818e-06 
+0.000216991 
+1.82313e-06 
+2.6513e-06 
+4.41031e-05 
+0.000569914 
+2.6513e-06 
+1.43604e-05 
+2.75818e-06 
+0 
+0 
+0 
+5.08895e-06 
+0 
+0 
+1.08936e-06 
+2.6513e-06 
+0 
+0 
+0.000269961 
+0 
+0 
+0 
+0 
+0 
+# Learning phase...
+ - Before training
+Accuracy: 582/629 = 0.925278
+Average error toward 0: -0.000730937 (38)
+Average error toward 1: 0.000141817 (9)
+Prev: 0.645469 (error: 0.0604134) Offset: 0 0
+Ratio error 1 : 0.191489
+-----------------
+- 185 - 9 - 
+-----------------
+- 38 - 397 - 
+-----------------
+ - Phase 1
+Accuracy: 599/629 = 0.952305
+Average error toward 0: -0.000881 (18)
+Average error toward 1: 0.000321 (12)
+Prev: 0.645469 (error: 0.028617) Offset: 0.000000 0.000000
+Ratio error 1 : 0.400000
+-----------------
+- 205 - 12 - 
+-----------------
+- 18 - 394 - 
+-----------------
+ - Verification
+Accuracy: 613/629 = 0.974563
+Average error toward 0: -0.000916 (4)
+Average error toward 1: 0.000443 (12)
+Prev: 0.645469 (error: 0.006359) Offset: 0.000000 0.000000
+Ratio error 1 : 0.750000
+-----------------
+- 219 - 12 - 
+-----------------
+- 4 - 394 - 
+-----------------
+Serialization of post-training strength vectors...
+# Predictions
+# Already in case-base: 30 1.000000
+0.929896
+Accuracy: 67/69 = 0.971014
+Average error toward 0: 0.000000 (0)
+Average error toward 1: 0.000009 (2)
+Prev: 0.645469 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : 1.000000
+-----------------
+- 18 - 2 - 
+-----------------
+- 0 - 49 - 
+-----------------
+# Prediction serialization...
+# Saving the [69,90] weight matrix...
+0.044787

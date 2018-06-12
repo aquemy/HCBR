@@ -1,0 +1,49 @@
+{
+    "parameters": {
+        "heuristic": false, 
+        "training_iterations": 1, 
+        "shuffle": false, 
+        "run_id": 2, 
+        "sample_out": true, 
+        "starting_case": 0, 
+        "seed": 0, 
+        "keep_offset": true, 
+        "online": true, 
+        "limit": 29305, 
+        "no_prediction": false
+    }, 
+    "output": {
+        "verbose": 0
+    }, 
+    "deserialization": {
+        "mu1_file": "Mu_1_post_training.txt", 
+        "path": "./", 
+        "mu0_file": "Mu_0_post_training.txt", 
+        "deserialize": false, 
+        "level": "full"
+    }, 
+    "hyperparameters": {
+        "eta0": 0.0, 
+        "eta1": 0.0, 
+        "delta": 0.0, 
+        "bar_eta0": 0.0, 
+        "bias": 0.0, 
+        "gamma": 0.0, 
+        "l0": 1, 
+        "l1": 0, 
+        "bar_eta1": 0.0
+    }, 
+    "serialization": {
+        "mu1_file": "mu1.txt", 
+        "weight_file": "W.txt", 
+        "append_run_number": false, 
+        "serialize": true, 
+        "path": "./", 
+        "mu0_file": "mu0.txt"
+    }, 
+    "input": {
+        "casebase": "../experiments/adult/input_data/adult_casebase.fold_2.txt", 
+        "features": "../", 
+        "outcomes": "../experiments/adult/input_data/adult_outcomes.fold_2.txt"
+    }
+}

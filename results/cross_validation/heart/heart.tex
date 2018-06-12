@@ -1,0 +1,32 @@
+    \renewcommand\arraystretch{1.5}
+    \setlength\tabcolsep{0pt}
+    \begin{table}
+    \caption{Confusion matrix and performances indicators for the \texttt{heart} dataset.}
+    \label{table:heart}
+     \begin{small}
+    \begin{tabular}{c >{\bfseries}r @{\hspace{0.7em}}c @{\hspace{0.4em}}c @{\hspace{0.7em}}l}
+      \multirow{10}{*}{\rotatebox{90}{\parbox{3.1cm}{\bfseries\centering Predicted class}}} &
+        & \multicolumn{2}{c}{\bfseries Real class} & \\
+      & & \bfseries P & \bfseries N & \bfseries Total \\
+      & \cmlegend{P} & \cmbox{12.40} & \cmbox{1.90} & \cmlegend{14.30} \\
+      & \cmlegend{N} & \cmbox{1.90} & \cmbox{9.80} & \cmlegend{11.70} \\
+      & \cmlegend{Total} & \cmlegend{14.30} & \cmlegend{11.70} & \cmlegend{28}
+    \end{tabular}
+    \end{small}
+    \hfill
+    \begin{small}
+    \begin{tabular}{| @{\hspace{0.7em}}l  @{\hspace{0.7em}} l  @{\hspace{0.7em}}|}
+        \hline
+        Accuracy: &0.8538\\
+        Prevalence: & 0.5107\\
+        True positive rate: & 0.8684\\
+        True negative rate: &0.8380 \\
+        Positive predictive value: & 0.8605 \\
+        Negative predictive value: & 0.8499\\
+        F1 score: & 0.8611\\
+        Matthews corr. coef.: & 0.7082\\
+        \hline
+      \end{tabular}
+    \end{small}
+    \end{table}
+    

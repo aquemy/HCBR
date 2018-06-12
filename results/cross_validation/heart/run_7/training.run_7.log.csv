@@ -1,0 +1,5 @@
+Time,                  Accuracy,                  True Positive,                  False Positive,                  False Negative,                  True Negative,                  Avg. Diff. True Pos.,                  Avg. Diff. True Neg.,                  Avg. Diff. False Pos.,                  Avg. Diff. False Neg.,                  Avg. Diff. True Pos. (%),                  Avg. Diff. True Neg. (%),                  Avg. Diff. False Pos. (%),                  Avg. Diff. False Neg. (%),                  MCC
+
+0.001910 , 0.82716 , 116 , 85 , 22 , 20 , 0.014348 , -0.015490 , 0.007704 , -0.006023 , 16.072859 , -18.253795 , 8.362273 , -6.613106 , 0.648717 , 
+0.001737 , 0.843621 , 116 , 89 , 18 , 20 , 0.009990 , -0.010521 , 0.016154 , -0.010599 , 11.184467 , -12.358321 , 17.288374 , -11.697378 , 0.683450 , 
+0.001753 , 0.843621 , 128 , 77 , 30 , 8 , 0.008296 , -0.005417 , 0.013932 , -0.028263 , 9.192287 , -6.430819 , 14.836136 , -31.309377 , 0.687852 , 

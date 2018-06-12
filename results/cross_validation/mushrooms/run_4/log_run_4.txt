@@ -1,0 +1,494 @@
+# Loading the instance files...
+# Perform sanity checks on the dataset
+# Setting the parameters...
+# Initialize...
+# Online: 1
+# Verbose level: 0
+# Cases: 8124
+# Total features: 170604
+# Unique features: 112 (ratio: 0.000656491)
+# Minimum case size: 21
+# Maximum case size: 21
+# Average case size: 21
+# Add cases...
+# Model serialization...
+# Saving the [7312,106] weight matrix...
+# Calculate intrinsic strength...
+Calculate strength for 7312
+Serialization of pre-training strength vectors...
+1.83886e-05 
+0.0468537 
+0 
+0.0114182 
+0.000437967 
+0.00705318 
+0 
+0.000324498 
+0.0136899 
+0.00675057 
+9.19492e-05 
+0.00489568 
+0.0357138 
+0.0120353 
+0.0548231 
+0.00179526 
+0.0427932 
+0.0742082 
+5.22226e-05 
+0.0125677 
+0.00800422 
+0.0371301 
+0.00148568 
+0.0113597 
+0.0649137 
+0.0636789 
+0.0566757 
+0.00503539 
+0.0143694 
+0.0181066 
+0.0347087 
+0.0157396 
+0.0310416 
+0.000896743 
+0.00155463 
+0 
+0.000114578 
+0.0105431 
+0.0100332 
+0.00534419 
+0.0772702 
+0.000745975 
+0.00114278 
+0.00265871 
+0.00434588 
+0.000288189 
+0.0860596 
+1.46599e-05 
+0.000607851 
+0.00399332 
+0.00176931 
+0.00142891 
+0.00139621 
+0.000109663 
+0 
+0.00352984 
+0.000765898 
+0.00746969 
+0 
+1.39711e-05 
+4.5623e-05 
+0 
+0.000211098 
+0 
+0.0039672 
+5.35871e-05 
+6.08412e-05 
+1.46881e-05 
+0.000858415 
+0.000316417 
+1.34011e-06 
+2.5332e-05 
+0 
+0.000720906 
+0.00020033 
+0.000365392 
+0.000874582 
+0.000808945 
+9.98995e-06 
+0.00148131 
+0 
+5.59467e-05 
+2.66266e-05 
+0.000929002 
+1.53612e-05 
+2.75363e-05 
+0.000213831 
+0 
+0.000769383 
+5.92486e-06 
+0.000476592 
+5.5349e-05 
+6.69114e-06 
+0.0772702 
+0.000232251 
+0 
+1.16633e-05 
+0 
+1.77687e-06 
+0 
+1.39711e-05 
+0 
+1.35916e-06 
+1.34011e-06 
+0 
+0 
+# Learning phase...
+ - Before training
+Accuracy: 6534/7312 = 0.8936
+Average error toward 0: -0.000378904 (689)
+Average error toward 1: 3.69813e-05 (89)
+Prev: 0.517642 (error: 0.0942287) Offset: 0 0
+Ratio error 1 : 0.114396
+-----------------
+- 2838 - 89 - 
+-----------------
+- 689 - 3696 - 
+-----------------
+ - Phase 1
+Accuracy: 7090/7312 = 0.969639
+Average error toward 0: -0.000401 (112)
+Average error toward 1: 0.000045 (110)
+Prev: 0.517642 (error: 0.015317) Offset: 0.000000 0.000000
+Ratio error 1 : 0.495495
+-----------------
+- 3415 - 110 - 
+-----------------
+- 112 - 3675 - 
+-----------------
+ - Phase 2
+Accuracy: 7258/7312 = 0.992615
+Average error toward 0: -0.000402 (29)
+Average error toward 1: 0.000046 (25)
+Prev: 0.517642 (error: 0.003966) Offset: 0.000000 0.000000
+Ratio error 1 : 0.462963
+-----------------
+- 3498 - 25 - 
+-----------------
+- 29 - 3760 - 
+-----------------
+ - Phase 3
+Accuracy: 7291/7312 = 0.997128
+Average error toward 0: -0.000402 (11)
+Average error toward 1: 0.000046 (10)
+Prev: 0.517642 (error: 0.001504) Offset: 0.000000 0.000000
+Ratio error 1 : 0.476190
+-----------------
+- 3516 - 10 - 
+-----------------
+- 11 - 3775 - 
+-----------------
+ - Phase 4
+Accuracy: 7300/7312 = 0.998359
+Average error toward 0: -0.000402 (6)
+Average error toward 1: 0.000046 (6)
+Prev: 0.517642 (error: 0.000821) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3521 - 6 - 
+-----------------
+- 6 - 3779 - 
+-----------------
+ - Phase 5
+Accuracy: 7306/7312 = 0.999179
+Average error toward 0: -0.000403 (3)
+Average error toward 1: 0.000046 (3)
+Prev: 0.517642 (error: 0.000410) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3524 - 3 - 
+-----------------
+- 3 - 3782 - 
+-----------------
+ - Phase 6
+Accuracy: 7306/7312 = 0.999179
+Average error toward 0: -0.000403 (3)
+Average error toward 1: 0.000047 (3)
+Prev: 0.517642 (error: 0.000410) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3524 - 3 - 
+-----------------
+- 3 - 3782 - 
+-----------------
+ - Phase 7
+Accuracy: 7306/7312 = 0.999179
+Average error toward 0: -0.000403 (3)
+Average error toward 1: 0.000047 (3)
+Prev: 0.517642 (error: 0.000410) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3524 - 3 - 
+-----------------
+- 3 - 3782 - 
+-----------------
+ - Phase 8
+Accuracy: 7306/7312 = 0.999179
+Average error toward 0: -0.000403 (3)
+Average error toward 1: 0.000047 (3)
+Prev: 0.517642 (error: 0.000410) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3524 - 3 - 
+-----------------
+- 3 - 3782 - 
+-----------------
+ - Phase 9
+Accuracy: 7306/7312 = 0.999179
+Average error toward 0: -0.000403 (3)
+Average error toward 1: 0.000047 (3)
+Prev: 0.517642 (error: 0.000410) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3524 - 3 - 
+-----------------
+- 3 - 3782 - 
+-----------------
+ - Phase 10
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 11
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 12
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 13
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 14
+Accuracy: 7305/7312 = 0.999043
+Average error toward 0: -0.000403 (4)
+Average error toward 1: 0.000047 (3)
+Prev: 0.517642 (error: 0.000547) Offset: 0.000000 0.000000
+Ratio error 1 : 0.428571
+-----------------
+- 3523 - 3 - 
+-----------------
+- 4 - 3782 - 
+-----------------
+ - Phase 15
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 16
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 17
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 18
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 19
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 20
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 21
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 22
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 23
+Accuracy: 7308/7312 = 0.999453
+Average error toward 0: -0.000403 (2)
+Average error toward 1: 0.000047 (2)
+Prev: 0.517642 (error: 0.000274) Offset: 0.000000 0.000000
+Ratio error 1 : 0.500000
+-----------------
+- 3525 - 2 - 
+-----------------
+- 2 - 3783 - 
+-----------------
+ - Phase 24
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 25
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 26
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 27
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 28
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 29
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Phase 30
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+ - Verification
+Accuracy: 7312/7312 = 1.000000
+Average error toward 0: -0.000403 (0)
+Average error toward 1: 0.000047 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 3527 - 0 - 
+-----------------
+- 0 - 3785 - 
+-----------------
+Serialization of post-training strength vectors...
+# Predictions
+# Already in case-base: 0 -nan
+1.000000
+Accuracy: 811/811 = 1.000000
+Average error toward 0: 0.000000 (0)
+Average error toward 1: 0.000000 (0)
+Prev: 0.517642 (error: 0.000000) Offset: 0.000000 0.000000
+Ratio error 1 : -nan
+-----------------
+- 388 - 0 - 
+-----------------
+- 0 - 423 - 
+-----------------
+# Prediction serialization...
+# Saving the [811,106] weight matrix...
+3.399094
