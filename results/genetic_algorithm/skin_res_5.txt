@@ -1,0 +1,7 @@
+# INITIALIZATION
+Counter({'FP': 122, 'TN': 77, 'TP': 27, 'FN': 17})
+# Initial Accuracy: 0.427983539095
+# Initial MCC: 0.000451502403843
+# Minimal variation in Mu: -0.12253588544
+# Min in Mu: [-0.05541708]
+# Min variation in initial S: 6.53119483148e-05
