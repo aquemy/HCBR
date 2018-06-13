@@ -81,16 +81,19 @@ def main():
             38 - perdiction time
             46 - accuracy
             60 - MCC
-            34 - accuracy training
+            32 - accuracy training
             '''
-            columns = [6, 29, 30, 37, 46, 60, 34]
-            s = [0.] * 6
+            columns = [6, 29, 30, 37, 46, 60, 32, 7]
+            s = [0.] * 8
+            var = [[],[]]
             for k, l in enumerate(res):
                 for j, i in enumerate(columns):
-                    if j == 3:
-                        print(k, h[i], float(l[i].strip()), s[j])
-                    #print(j, l[i].strip())
+                    print(k, h[i], float(l[i].strip()), s[j])
                     s[j] += float(l[i].strip())
+                    if j == 4:
+                        var[0].append(float(l[i].strip()))
+                    if j == 6:
+                        var[1].append(float(l[i].strip()))
             print('building: {}'.format(s[0] / kfold))
             print('strength: {}'.format(s[1] / kfold))
             print('learning: {}'.format(s[2] / kfold))
@@ -102,7 +105,7 @@ def main():
 
             
             with open('{}.size.txt'.format(instance[0]), 'a') as file:
-                file.write('{} {} {} {} {} {} {} {} {}\n'.format(
+                file.write('{} {} {} {} {} {} {} {} {} {} {} {} {}\n'.format(
                     pct, 
                     kfold, 
                     s[0] / kfold, 
@@ -112,7 +115,10 @@ def main():
                     (s[0] + s[1] + s[2] + s[3]) / kfold, 
                     s[4] / kfold,
                     s[5] / kfold,
-                    s[6] / kfold
+                    s[6] / kfold,
+                    np.std(var[0]),
+                    np.std(var[1]),
+                    s[7] / kfold
                 ))
 
 
